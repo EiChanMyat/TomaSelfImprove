@@ -39,7 +39,10 @@ tailwind.config = { theme: { extend: {
           <button data-a="tab" data-v="focus"  class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">⏱️ Focus</button>
           <button data-a="tab" data-v="mood"   class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">😊 Mood</button>
         </nav>
-        <button id="authChip" data-a="auth" class="shrink-0 text-xs font-bold bg-white rounded-full px-3 py-1.5 shadow-sm"></button>
+        <div class="shrink-0 flex items-center gap-2">
+          <span id="acct" class="text-xs bg-white/70 rounded-full px-3 py-1.5 max-w-[140px] sm:max-w-[240px] truncate" title="Current account"></span>
+          <button id="authChip" data-a="auth" class="text-xs font-bold bg-white rounded-full px-3 py-1.5 shadow-sm"></button>
+        </div>
       </div>
       <div class="card mt-3 px-4 py-3">
         <div class="flex justify-between text-sm font-bold mb-1.5">
@@ -82,6 +85,21 @@ tailwind.config = { theme: { extend: {
   <button data-a="closeAuth" class="w-full text-sm mt-3 text-ink/60">Close</button>
 </dialog>
 
+<!-- Add / edit focus -->
+<dialog id="focusDlg" class="rounded-3xl p-6 w-[320px] backdrop:bg-ink/40">
+  <h2 id="focusDlgTitle" class="font-display text-xl font-semibold mb-3">New focus</h2>
+  <label class="text-sm font-bold" for="fName">Name</label>
+  <input id="fName" maxlength="30" placeholder="e.g. Cleaning" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 mb-3">
+  <label class="text-sm font-bold" for="fMinutes">Minutes (1 to 180)</label>
+  <input id="fMinutes" type="number" min="1" max="180" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 mb-3">
+  <p id="fMsg" class="text-sm text-red-600 min-h-[1.25rem] mb-2"></p>
+  <div class="flex gap-2">
+    <button data-a="saveFocus" class="flex-1 bg-mint-500 text-white font-bold rounded-xl py-2">Save</button>
+    <button data-a="closeFocus" class="flex-1 bg-butter-300 font-bold rounded-xl py-2">Cancel</button>
+  </div>
+  <button id="fDelete" data-a="deleteFocus" class="hidden w-full text-sm mt-3 text-red-600 font-bold">Delete this focus</button>
+</dialog>
+
 <!-- Add / edit habit -->
 <dialog id="habitDlg" class="rounded-3xl p-6 w-[320px] backdrop:bg-ink/40">
   <h2 id="habitTitle" class="font-display text-xl font-semibold mb-3">New habit</h2>
@@ -91,7 +109,7 @@ tailwind.config = { theme: { extend: {
     <div><label class="text-sm font-bold" for="hEnergy">Reward</label>
       <select id="hEnergy" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 bg-white"><option value="5">5 💧 small</option><option value="10">10 💧 medium</option><option value="15">15 💧 big</option></select></div>
     <div><label class="text-sm font-bold" for="hIcon">Icon</label>
-      <select id="hIcon" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 bg-white"><option>🌟</option><option>🥗</option><option>🚶‍♀️</option><option>💧</option><option>📚</option><option>🧘</option><option>😴</option><option>💪</option><option>🎨</option><option>🌿</option></select></div>
+      <select id="hIcon" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 bg-white"><option>🌟</option><option>🥗</option><option>💭</option><option>🚶‍♀️</option><option>💧</option><option>📚</option><option>🧘</option><option>😴</option><option>💪</option><option>🎨</option><option>🌿</option></select></div>
   </div>
   <p id="hMsg" class="text-sm text-red-600 min-h-[1.25rem] mb-2"></p>
   <div class="flex gap-2">

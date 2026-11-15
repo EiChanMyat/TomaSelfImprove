@@ -6,13 +6,15 @@ const sb = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
 const dateKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const TODAY = dateKey(new Date());   // your local date, so days roll over at your own midnight
 const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return dateKey(d); };
-const ICONS = { 1:'🥗', 2:'🚶‍♀️', 3:'💭', 4:'💧', 5:'🧘' };
 const DEFAULT_HABITS = [
-  { id:1, title:'Control carbohydrates',  energy:10 },
-  { id:2, title:'Power walk 20 min',      energy:15 },
-  { id:3, title:'Think of a good memory', energy:10 },
-  { id:4, title:'Drink 6 glasses of water', energy:10 },
-  { id:5, title:'Stretch for 5 minutes',  energy:5 }
+  { id:1, title:'Control carbohydrates',    energy:10, icon:'🥗' },
+  { id:2, title:'Power walk 20 min',        energy:15, icon:'🚶‍♀️' },
+  { id:3, title:'Think of a good memory',   energy:10, icon:'💭' },
+  { id:4, title:'Drink 6 glasses of water', energy:10, icon:'💧' },
+  { id:5, title:'Stretch for 5 minutes',    energy:5,  icon:'🧘' }
+];
+const DEFAULT_FOCUS = [
+  { id:'f1', name:'Focus', minutes:25 }, { id:'f2', name:'Meditation', minutes:10 }, { id:'f3', name:'Reading', minutes:20 }
 ];
 const MOODS = [
   { k:'happy',   e:'😄', l:'Happy' },   { k:'relaxed', e:'😌', l:'Relaxed' },
@@ -29,10 +31,10 @@ const AFFIRMATIONS = [
   'Today I choose progress over perfect.',
   'I deserve care, starting with my own.'
 ];
-const CATS = { Focus:25, Meditation:10, Reading:20 };
 
-const S = { tab:'home', habits:DEFAULT_HABITS, done:new Set(), energy:0, mood:null, user:null, aff:new Date().getDate() % AFFIRMATIONS.length };
-const T = { cat:'Focus', total:1500, left:1500, running:false, end:0, id:null };
+const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY,
+  calMonth:new Date(new Date().getFullYear(), new Date().getMonth(), 1), user:null, aff:new Date().getDate() % AFFIRMATIONS.length };
+const T = { sel:'f1', total:1500, left:1500, running:false, end:0, id:null };
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -43,41 +45,50 @@ const pct = () => Math.min(100, Math.round(dayEnergy() / (goal() || 1) * 100));
 
 /* ============ 3. DATA LAYER (localStorage + optional Supabase) ============ */
 function localLoad() {
-  S.habits = DEFAULT_HABITS.slice(); S.hist = {};
-  try {
-    const d = JSON.parse(localStorage.getItem('toma-v1') || '{}');
-    S.energy = d.energy || 0; S.done = new Set(); S.mood = null;
-    S.hist = JSON.parse(localStorage.getItem('toma-hist') || '{}');
-    if (d.date === TODAY) { S.done = new Set(d.done || []); S.mood = d.mood || null; }
-    S.habits = DEFAULT_HABITS.concat(JSON.parse(localStorage.getItem('toma-habits') || '[]'));
-  } catch (e) {}
+  const get = (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } };
+  const d = get('toma-v1', {});
+  S.energy = d.energy || 0;
+  S.done = new Set(d.date === TODAY ? d.done || [] : []);
+  S.hist = get('toma-hist', {});
+  S.moodMap = get('toma-moods', {});
+  S.mood = S.moodMap[TODAY] || null;
+  S.habits = get('toma-habits2', DEFAULT_HABITS.map(h => ({ ...h })));
+  S.focus = get('toma-focus', DEFAULT_FOCUS.map(f => ({ ...f })));
+  selectFocus(S.focus[0].id);
 }
 function localSave() {
   try {
     S.hist[TODAY] = S.done.size;
-    localStorage.setItem('toma-v1', JSON.stringify({ date:TODAY, done:[...S.done], energy:S.energy, mood:S.mood }));
-    if (!cloud()) localStorage.setItem('toma-hist', JSON.stringify(S.hist));
-    if (!cloud()) localStorage.setItem('toma-habits', JSON.stringify(S.habits.filter(h => h.custom)));
+    localStorage.setItem('toma-v1', JSON.stringify({ date:TODAY, done:[...S.done], energy:S.energy }));
+    if (cloud()) return;   // signed in: the cloud is the source of truth
+    localStorage.setItem('toma-hist', JSON.stringify(S.hist));
+    localStorage.setItem('toma-moods', JSON.stringify(S.moodMap));
+    localStorage.setItem('toma-habits2', JSON.stringify(S.habits));
+    localStorage.setItem('toma-focus', JSON.stringify(S.focus));
   } catch (e) {}
 }
-const isCustom = h => !!(h.user_id || h.custom);   // a habit the user made themselves
 
 async function cloudLoad() {
-  const [h, l, g, m, r] = await Promise.all([
+  const [h, l, g, m, r, st] = await Promise.all([
     sb.from('habits').select('*').order('id'),
     sb.from('habit_logs').select('habit_id').eq('log_date', TODAY),
     sb.from('garden_stats').select('*').maybeSingle(),
-    sb.from('moods').select('mood').gte('created_at', new Date(TODAY + 'T00:00:00').toISOString()).order('created_at', { ascending:false }).limit(1),
-    sb.from('habit_logs').select('log_date').gte('log_date', daysAgo(60))
+    sb.from('moods').select('mood_date,mood').order('mood_date', { ascending:false }).limit(800),
+    sb.from('habit_logs').select('log_date').gte('log_date', daysAgo(60)),
+    sb.from('user_settings').select('focus_types').maybeSingle()
   ]);
-  if (h.data && h.data.length) S.habits = h.data;
-  S.done = new Set((l.data || []).map(r => r.habit_id));
+  S.habits = h.data || [];
+  S.done = new Set((l.data || []).map(x => x.habit_id));
   S.energy = g.data ? g.data.energy : 0;
-  S.mood = m.data && m.data[0] ? m.data[0].mood : null;
-  S.hist = {};
-  (r.data || []).forEach(x => { S.hist[x.log_date] = (S.hist[x.log_date] || 0) + 1; });
+  S.moodMap = {}; (m.data || []).forEach(x => { S.moodMap[x.mood_date] = x.mood; });
+  S.mood = S.moodMap[TODAY] || null;
+  S.hist = {}; (r.data || []).forEach(x => { S.hist[x.log_date] = (S.hist[x.log_date] || 0) + 1; });
+  const ft = st.data && st.data.focus_types;
+  S.focus = ft && ft.length ? ft : DEFAULT_FOCUS.map(f => ({ ...f }));
+  selectFocus(S.focus[0].id);
 }
 const saveEnergy = () => sb.from('garden_stats').upsert({ user_id:S.user.id, energy:S.energy, updated_at:new Date().toISOString() });
+const syncFocus = () => sb.from('user_settings').upsert({ user_id:S.user.id, focus_types:S.focus, updated_at:new Date().toISOString() });
 async function guard(p) {
   try { const r = await p; if (r && r.error) throw r.error; } catch (e) { toast('Couldn’t sync: ' + (e.message || 'try again')); }
 }

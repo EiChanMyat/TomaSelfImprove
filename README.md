@@ -14,7 +14,8 @@ toma-web/
 ├── js/app.js                        views, timer, actions, startup
 └── supabase/
     ├── schema.sql                   tables, row-level security, starter habits (run first)
-    └── update-custom-habits.sql     custom habits update (run second)
+    ├── update-custom-habits.sql     custom habits update (run second)
+    └── update-v4.sql                manage all habits, custom focus timers, mood calendar (run third)
 ```
 
 ## Run locally

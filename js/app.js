@@ -26,16 +26,16 @@ function toma(size = 'w-36 h-36') {
 const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
 
 /* ============ 5. VIEWS ============ */
-function habitRow(h) {
+function habitRow(h, manage) {
   const on = S.done.has(h.id);
-  const icon = (isCustom(h) ? h.icon : ICONS[h.id]) || h.icon || '🌟';
-  return `<div class="card flex items-center gap-3 px-4 py-3" style="${on ? 'background:#d8f3e4' : ''}">
-    <span class="text-2xl">${esc(icon)}</span>
-    <div class="flex-1 min-w-0">
+  return `<div class="card flex items-center gap-2 px-4 py-3" style="${on ? 'background:#d8f3e4' : ''}">
+    <span class="text-2xl">${esc(h.icon || '🌟')}</span>
+    <div class="flex-1 min-w-0 pl-1">
       <p class="font-bold break-words ${on ? 'line-through opacity-60' : ''}">${esc(h.title)}</p>
-      <p class="text-xs text-ink/60">+${h.energy} 💧${isCustom(h) ? ' · yours' : ''}</p>
+      <p class="text-xs text-ink/60">+${h.energy} 💧</p>
     </div>
-    ${isCustom(h) ? `<button data-a="editHabit" data-v="${h.id}" class="w-9 h-9 rounded-full bg-sky-100 text-sm" aria-label="Edit ${esc(h.title)}">✏️</button>` : ''}
+    ${manage ? `<button data-a="editHabit" data-v="${h.id}" class="w-9 h-9 rounded-full bg-sky-100 text-sm" aria-label="Edit ${esc(h.title)}">✏️</button>
+    <button data-a="deleteHabit" data-v="${h.id}" class="w-9 h-9 rounded-full bg-butter-100 text-sm" aria-label="Delete ${esc(h.title)}">🗑️</button>` : ''}
     <button data-a="toggle" data-v="${h.id}" aria-pressed="${on}" aria-label="${on ? 'Undo' : 'Complete'} ${esc(h.title)}"
       class="w-10 h-10 rounded-full border-2 text-lg font-bold ${on ? 'bg-mint-500 border-mint-500 text-white pop' : 'border-mint-300 bg-white text-transparent'}">✓</button>
   </div>`;
@@ -63,20 +63,20 @@ function homeView() {
       </section>
       <section>
         <h2 class="font-display text-lg font-medium mb-2">Up next</h2>
-        <div class="grid sm:grid-cols-2 gap-2">${S.habits.filter(h => !S.done.has(h.id)).slice(0, 4).map(habitRow).join('') || '<p class="card p-4 text-sm">Every habit is done. Take a deep breath. 🌸</p>'}</div>
+        <div class="grid sm:grid-cols-2 gap-2">${S.habits.filter(h => !S.done.has(h.id)).slice(0, 4).map(h => habitRow(h)).join('') || '<p class="card p-4 text-sm">Every habit is done. Take a deep breath. 🌸</p>'}</div>
       </section>
     </div>
   </div>`;
 }
 function habitsView() {
   return `<div class="flex items-center justify-between mt-2 mb-3">
-      <h2 class="font-display text-xl font-medium">Today’s habits</h2>
+      <h2 class="font-display text-xl font-medium">Your habits</h2>
       <button data-a="addHabit" class="bg-mint-500 text-white font-bold rounded-full px-4 py-2 text-sm shadow-sm">+ Add habit</button>
     </div>
-    <div class="grid md:grid-cols-2 gap-3">${S.habits.map(habitRow).join('')}</div>
+    ${S.habits.length ? `<div class="grid md:grid-cols-2 gap-3">${S.habits.map(h => habitRow(h, true)).join('')}</div>`
+      : '<p class="card p-6 text-center">No habits yet. Tap “+ Add habit” to create your first one. 🌱</p>'}
     <p class="text-center text-sm text-ink/60 mt-4">${S.done.size} of ${S.habits.length} done${cloud() ? '' : ' · sign in to keep your habits on every device'}</p>`;
 }
-/* Streak = consecutive days with at least one habit done (today may still be open) */
 function streak() {
   let n = 0; const d = new Date();
   if (!(S.hist[dateKey(d)] > 0)) d.setDate(d.getDate() - 1);
@@ -124,40 +124,68 @@ function confetti() {
     document.body.appendChild(p); setTimeout(() => p.remove(), 2400);
   }
 }
+const curFocus = () => S.focus.find(f => f.id === T.sel) || S.focus[0];
+function selectFocus(id) {
+  const f = S.focus.find(x => x.id === id) || S.focus[0];
+  stopTimer(); T.sel = f.id; T.total = T.left = f.minutes * 60;
+}
 function focusView() {
-  return `<div class="max-w-xl mx-auto"><div class="flex justify-center gap-2 mt-2">${Object.keys(CATS).map(c =>
-    `<button data-a="cat" data-v="${c}" class="px-4 py-1.5 rounded-full text-sm font-bold ${T.cat === c ? 'bg-sky-300' : 'bg-white'}">${c}</button>`).join('')}</div>
+  const f = curFocus();
+  return `<div class="max-w-xl mx-auto"><div class="flex flex-wrap justify-center gap-2 mt-2">${S.focus.map(x =>
+    `<button data-a="cat" data-v="${x.id}" class="px-4 py-1.5 rounded-full text-sm font-bold ${x.id === f.id ? 'bg-sky-300' : 'bg-white'}">${esc(x.name)}</button>`).join('')}
+    <button data-a="addFocus" class="px-4 py-1.5 rounded-full text-sm font-bold bg-mint-500 text-white">+ New</button></div>
   <div class="card mt-4 py-10 flex flex-col items-center">
     <div class="relative w-64 h-64">
       <svg viewBox="0 0 200 200" class="w-full h-full -rotate-90">
         <circle cx="100" cy="100" r="88" fill="none" stroke="#dff0fb" stroke-width="12"/>
         <circle id="ring" cx="100" cy="100" r="88" fill="none" stroke="#4fb88a" stroke-width="12" stroke-linecap="round" stroke-dasharray="553"/>
       </svg>
-      <div class="absolute inset-0 flex flex-col items-center justify-center">
+      <div class="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
         <span id="time" class="font-display text-6xl font-semibold"></span>
-        <span class="text-sm text-ink/60">${T.cat}</span>
+        <span class="text-sm text-ink/60 break-words">${esc(f.name)} · ${f.minutes} min</span>
       </div>
     </div>
     <div class="flex gap-3 mt-6">
       <button id="sbtn" data-a="startpause" class="px-8 py-3 rounded-2xl bg-mint-500 text-white font-bold text-lg"></button>
       <button data-a="reset" class="px-5 py-3 rounded-2xl bg-butter-300 font-bold">Reset</button>
+      <button data-a="editFocus" class="px-5 py-3 rounded-2xl bg-sky-100 font-bold">Edit</button>
     </div>
     <p class="text-xs text-ink/60 mt-4">Finish a session to earn +15 💧</p>
   </div></div>`;
 }
 function moodView() {
+  const day = S.moodDay, cur = S.moodMap[day], now = new Date();
+  const y = S.calMonth.getFullYear(), mo = S.calMonth.getMonth();
+  const first = new Date(y, mo, 1).getDay(), days = new Date(y, mo + 1, 0).getDate();
+  const isCurMonth = y === now.getFullYear() && mo === now.getMonth();
+  const dayLabel = day === TODAY ? 'today' : 'on ' + new Date(day + 'T00:00:00').toLocaleDateString('en', { weekday:'short', day:'numeric', month:'short' });
+  const cells = Array(first).fill('<div></div>').concat(Array.from({ length:days }, (_, i) => {
+    const k = dateKey(new Date(y, mo, i + 1)), m = MOODS.find(x => x.k === S.moodMap[k]), future = k > TODAY;
+    return `<button ${future ? 'disabled' : `data-a="pickDay" data-v="${k}"`} aria-label="${k}" class="aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 ${k === day ? 'ring-4 ring-sky-300' : ''} ${k === TODAY ? 'bg-butter-100' : 'bg-white'} ${future ? 'opacity-30' : 'hover:bg-mint-50'}">
+      <span class="text-[10px] leading-none text-ink/60">${i + 1}</span><span class="text-xl sm:text-2xl leading-none">${m ? m.e : '·'}</span></button>`;
+  })).join('');
   return `<div class="grid md:grid-cols-2 gap-5 mt-2">
   <section>
-    <h2 class="font-display text-xl font-medium mb-3">How are you feeling?</h2>
+    <h2 class="font-display text-xl font-medium mb-1">How did you feel ${dayLabel}?</h2>
+    <p class="text-sm text-ink/60 mb-3">One mood per day. Tap the same mood again to clear it, or pick another day on the calendar to edit it.</p>
     <div class="grid grid-cols-5 gap-2">${MOODS.map(m =>
-      `<button data-a="mood" data-v="${m.k}" aria-pressed="${S.mood === m.k}" class="card py-4 flex flex-col items-center gap-1 text-xs sm:text-sm font-bold ${S.mood === m.k ? 'ring-4 ring-sky-300' : ''}">
+      `<button data-a="mood" data-v="${m.k}" aria-pressed="${cur === m.k}" class="card py-4 flex flex-col items-center gap-1 text-xs sm:text-sm font-bold ${cur === m.k ? 'ring-4 ring-sky-300' : ''}">
         <span class="text-3xl sm:text-4xl">${m.e}</span>${m.l}</button>`).join('')}</div>
-    <div class="flex justify-center mt-6">${toma('w-32 h-32')}</div>
+    <div class="flex justify-center mt-5">${toma('w-24 h-24')}</div>
+    <div class="rounded-3xl p-6 text-center bg-gradient-to-br from-butter-100 to-mint-100 shadow-sm mt-4">
+      <p class="text-sm font-bold text-mint-700">Today’s affirmation</p>
+      <p class="font-display text-2xl leading-snug mt-2">“${esc(AFFIRMATIONS[S.aff])}”</p>
+      <button data-a="shuffle" class="mt-4 text-sm font-bold bg-white rounded-full px-4 py-1.5">Show another</button>
+    </div>
   </section>
-  <section class="rounded-3xl p-8 text-center bg-gradient-to-br from-butter-100 to-mint-100 shadow-sm self-start">
-    <p class="text-sm font-bold text-mint-700">Today’s affirmation</p>
-    <p class="font-display text-3xl leading-snug mt-3">“${esc(AFFIRMATIONS[S.aff])}”</p>
-    <button data-a="shuffle" class="mt-5 text-sm font-bold bg-white rounded-full px-4 py-1.5">Show another</button>
+  <section class="card p-4 self-start">
+    <div class="flex items-center justify-between mb-3">
+      <button data-a="calPrev" class="w-9 h-9 rounded-full bg-sky-100 font-bold" aria-label="Previous month">‹</button>
+      <h2 class="font-display text-lg font-medium">${S.calMonth.toLocaleDateString('en', { month:'long', year:'numeric' })}</h2>
+      <button data-a="calNext" ${isCurMonth ? 'disabled' : ''} class="w-9 h-9 rounded-full bg-sky-100 font-bold ${isCurMonth ? 'opacity-30' : ''}" aria-label="Next month">›</button>
+    </div>
+    <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-ink/60 mb-1">${['S','M','T','W','T','F','S'].map(x => `<span>${x}</span>`).join('')}</div>
+    <div class="grid grid-cols-7 gap-1">${cells}</div>
   </section></div>`;
 }
 
@@ -165,6 +193,7 @@ function render() {
   $('#energyText').textContent = `${dayEnergy()} / ${goal()}`;
   $('#bar').style.width = pct() + '%';
   $('#authChip').textContent = !sb ? '📴 Local mode' : S.user ? 'Sign out' : 'Sign in';
+  $('#acct').textContent = S.user ? '👤 ' + S.user.email : (sb ? '👤 Guest · not signed in' : '👤 Guest · saved on this device');
   $('#view').innerHTML = ({ home:homeView, habits:habitsView, progress:progressView, focus:focusView, mood:moodView })[S.tab]();
   document.querySelectorAll('.nav').forEach(b => {
     const on = b.dataset.v === S.tab;
@@ -188,14 +217,25 @@ function tick() {
 function stopTimer() { clearInterval(T.id); T.running = false; }
 async function finishTimer() {
   stopTimer();
-  S.energy += 15; S.mood = S.mood; localSave();
-  const mins = CATS[T.cat];
+  const f = curFocus(); S.energy += 15; localSave();
   T.left = T.total;
-  render(); toast(`${T.cat} complete! +15 💧`);
+  render(); toast(`${f.name} complete! +15 💧`);
   if (cloud()) {
-    await guard(sb.from('focus_sessions').insert({ user_id:S.user.id, category:T.cat, minutes:mins }));
+    await guard(sb.from('focus_sessions').insert({ user_id:S.user.id, category:f.name, minutes:f.minutes }));
     await guard(saveEnergy());
   }
+}
+
+/* Open the add / edit focus dialog (id = null means a new focus) */
+function openFocus(id) {
+  const f = id ? S.focus.find(x => x.id === id) : null;
+  S.editFocusId = f ? f.id : null;
+  $('#focusDlgTitle').textContent = f ? 'Edit focus' : 'New focus';
+  $('#fName').value = f ? f.name : '';
+  $('#fMinutes').value = f ? f.minutes : 25;
+  $('#fDelete').classList.toggle('hidden', !f || S.focus.length < 2);
+  $('#fMsg').textContent = '';
+  $('#focusDlg').showModal();
 }
 
 /* Open the add / edit habit dialog (id = null means a new habit) */
@@ -229,7 +269,28 @@ const actions = {
       await guard(saveEnergy());
     }
   },
-  cat: v => { stopTimer(); T.cat = v; T.total = T.left = CATS[v] * 60; render(); },
+  cat: v => { selectFocus(v); render(); },
+  addFocus: () => openFocus(null),
+  editFocus: () => openFocus(T.sel),
+  closeFocus: () => $('#focusDlg').close(),
+  async saveFocus() {
+    const name = $('#fName').value.trim().slice(0, 30), minutes = Math.round(Number($('#fMinutes').value));
+    if (!name) return ($('#fMsg').textContent = 'Give it a name, like Cleaning.');
+    if (!(minutes >= 1 && minutes <= 180)) return ($('#fMsg').textContent = 'Choose between 1 and 180 minutes.');
+    const id = S.editFocusId; $('#focusDlg').close();
+    let f;
+    if (id) { f = S.focus.find(x => x.id === id); Object.assign(f, { name, minutes }); }
+    else { f = { id:'f' + Date.now(), name, minutes }; S.focus.push(f); }
+    selectFocus(f.id); localSave(); render();
+    if (cloud()) await guard(syncFocus());
+  },
+  async deleteFocus() {
+    const f = S.focus.find(x => x.id === S.editFocusId); if (!f || S.focus.length < 2) return;
+    $('#focusDlg').close();
+    if (!confirm('Delete “' + f.name + '”?')) return;
+    S.focus = S.focus.filter(x => x.id !== f.id); selectFocus(S.focus[0].id); localSave(); render();
+    if (cloud()) await guard(syncFocus());
+  },
   startpause() {
     if (T.running) { stopTimer(); }
     else { T.end = Date.now() + T.left * 1000; T.running = true; T.id = setInterval(tick, 250); }
@@ -237,10 +298,17 @@ const actions = {
   },
   reset() { stopTimer(); T.left = T.total; paintTimer(); },
   async mood(v) {
-    S.mood = v; localSave(); render();
-    toast(`Logged: ${MOODS.find(m => m.k === v).l}`);
-    if (cloud()) await guard(sb.from('moods').insert({ user_id:S.user.id, mood:v }));
+    const day = S.moodDay, clear = S.moodMap[day] === v;
+    if (clear) delete S.moodMap[day]; else S.moodMap[day] = v;
+    S.mood = S.moodMap[TODAY] || null;
+    localSave(); render(); toast(clear ? 'Mood cleared' : 'Mood saved');
+    if (cloud()) await guard(clear
+      ? sb.from('moods').delete().match({ user_id:S.user.id, mood_date:day })
+      : sb.from('moods').upsert({ user_id:S.user.id, mood_date:day, mood:v }, { onConflict:'user_id,mood_date' }));
   },
+  calPrev: () => { S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() - 1, 1); render(); },
+  calNext: () => { S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() + 1, 1); render(); },
+  pickDay: v => { S.moodDay = v; render(); },
   shuffle() { S.aff = (S.aff + 1) % AFFIRMATIONS.length; render(); },
   addHabit: () => openHabit(null),
   editHabit: v => openHabit(Number(v)),
@@ -269,9 +337,9 @@ const actions = {
     }
     localSave(); render();
   },
-  async deleteHabit() {
-    const id = S.editId, h = S.habits.find(x => x.id === id); if (!h) return;
-    $('#habitDlg').close();
+  async deleteHabit(v) {
+    const id = v ? Number(v) : S.editId, h = S.habits.find(x => x.id === id); if (!h) return;
+    if ($('#habitDlg').open) $('#habitDlg').close();
     if (!confirm('Delete “' + h.title + '”?')) return;
     if (S.done.has(id)) { S.energy = Math.max(0, S.energy - h.energy); S.done.delete(id); }
     S.habits = S.habits.filter(x => x.id !== id);
