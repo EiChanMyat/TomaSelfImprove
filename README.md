@@ -1,25 +1,29 @@
-# Toma – Grow Daily, Care Deeply (website version)
+# Toma – Grow Daily, Care Deeply
 
-A responsive habit-tracking website with a yellow tomato companion, Toma.
-Desktop: full-width site with a top menu and two-column dashboard. Phone: single column with a bottom tab bar.
+Responsive habit-tracking website with a yellow tomato companion, Toma.
+Habits (add / edit / delete your own), growth-energy garden, focus timer, mood + affirmations.
+Stack: HTML5, Tailwind CSS (CDN), vanilla JavaScript, Supabase.
 
-Stack: HTML5, Tailwind CSS (CDN), Vanilla JavaScript (ES6+), Supabase (optional).
+## Structure
+```
+toma-web/
+├── index.html                       page structure
+├── css/style.css                    custom styles and animations
+├── js/config.js                     Supabase URL + publishable key
+├── js/data.js                       state, localStorage and Supabase data layer
+├── js/app.js                        views, timer, actions, startup
+└── supabase/
+    ├── schema.sql                   tables, row-level security, starter habits (run first)
+    └── update-custom-habits.sql     custom habits update (run second)
+```
 
-## Files
-- index.html           the whole site (UI + logic)
-- supabase/schema.sql  tables, row-level security, seed habits
+## Run locally
+VS Code -> right-click index.html -> Open with Live Server.
 
-## Run in VS Code
-1. File → Open Folder… → this folder.
-2. Install the Live Server extension, then right-click index.html → Open with Live Server.
-Or run `npx serve` in the folder. Internet is needed for the CDNs.
+## Supabase setup (new project)
+1. SQL Editor: run schema.sql, then update-custom-habits.sql.
+2. Authentication -> URL Configuration: add your site URLs.
+3. Put your Project URL and publishable key in js/config.js. Never use the secret key.
 
-Without Supabase keys the site runs in Local mode (progress saved in the browser).
-
-## Connect Supabase
-1. Create a project at https://supabase.com.
-2. SQL Editor → paste supabase/schema.sql → Run.
-3. Project Settings → API → copy Project URL and anon public key.
-4. Paste them into SUPABASE_URL and SUPABASE_ANON_KEY at the top of the script in index.html (never the service_role key).
-5. Authentication → turn off "Confirm email" while testing; add http://127.0.0.1:5500 under URL Configuration.
-6. Reload, click Sign in, create an account.
+## Deploy
+Commit and sync to GitHub; Vercel redeploys automatically.
