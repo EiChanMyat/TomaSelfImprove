@@ -39,12 +39,21 @@ function habitRow(h, manage) {
       class="w-10 h-10 rounded-full border-2 text-lg font-bold ${on ? 'bg-mint-500 border-mint-500 text-white pop' : 'border-mint-300 bg-white text-transparent'}">✓</button>
   </div>`;
 }
+const SPECIES = [{ e:'🌷', n:'Tulip', lv:1 }, { e:'🌻', n:'Sunflower', lv:1 }, { e:'🌼', n:'Daisy', lv:2 }, { e:'🌸', n:'Blossom', lv:3 },
+  { e:'🍅', n:'Tomato', lv:4 }, { e:'🌹', n:'Rose', lv:5 }, { e:'🌳', n:'Tree', lv:6 }];
+function plantAt(i) {   // each plant keeps the species it was planted as, and grows as you earn more energy
+  const born = Math.floor((i + 1) / 5) + 1;                         // level when it was planted
+  const pool = SPECIES.filter(s => s.lv <= born), sp = pool[i % pool.length];
+  const age = S.energy - (i + 1) * 20;
+  const stage = age < 40 ? '🌱' : age < 80 ? '🌿' : sp.e;
+  return `<span class="text-4xl pop" title="${stage === sp.e ? sp.n : 'Growing…'}">${stage}</span>`;
+}
 function homeView() {
-  const plants = Math.min(12, Math.floor(S.energy / 20));
-  const stages = ['🌱', '🌿', '🌷', '🌻', '🍅'];
-  const slots = Array.from({ length:12 }, (_, i) => i < plants
-    ? `<span class="text-4xl pop">${stages[i % 5]}</span>` : `<span class="text-xl opacity-25">🟤</span>`).join('');
-  const msg = pct() === 0 ? 'Hi! Let’s water your garden today.'
+  const lvl = Math.floor(S.energy / 100) + 1, plants = Math.min(18, Math.floor(S.energy / 20));
+  const slots = Array.from({ length:18 }, (_, i) => i < plants ? plantAt(i) : `<span class="text-xl opacity-25">🟤</span>`).join('');
+  const next = SPECIES.find(s => s.lv > lvl);
+  const unlocked = SPECIES.map(s => `<span class="${s.lv <= lvl ? '' : 'opacity-40'}" title="${s.lv <= lvl ? s.n : 'Unlocks at level ' + s.lv}">${s.lv <= lvl ? s.e : '🔒'}</span>`).join(' ');
+  const msg = pct() === 0 ? (S.prefs.name ? 'Hi ' + esc(S.prefs.name) + '! ' : 'Hi! ') + 'Let’s water your garden today.'
     : pct() < 100 ? `Nice work! ${goal() - dayEnergy()} more energy to a full day.`
     : 'All done! Your garden is glowing today. ✨';
   const stat = (v, l) => `<div class="bg-butter-100 rounded-2xl py-2"><p class="font-display text-xl font-semibold">${v}</p><p class="text-xs text-ink/70">${l}</p></div>`;
@@ -56,9 +65,10 @@ function homeView() {
     </section>
     <div class="space-y-5">
       <section class="card p-5">
-        <h2 class="font-display text-lg font-medium mb-3">My garden</h2>
-        <div class="grid grid-cols-4 sm:grid-cols-6 gap-3 place-items-center bg-butter-100 rounded-2xl py-5">${slots}</div>
-        <p class="text-xs text-ink/60 mt-2">Every 20 energy grows a new plant.</p>
+        <h2 class="font-display text-lg font-medium mb-3">${esc(S.prefs.garden || 'My garden')}</h2>
+        <div class="grid grid-cols-6 gap-2 sm:gap-3 place-items-center bg-butter-100 rounded-2xl py-5">${slots}</div>
+        <p class="text-xs text-ink/60 mt-2">Every 20 energy plants a seed, and plants grow as you keep going. ${next ? `Reach level ${next.lv} to unlock ${next.e} ${next.n}.` : 'Every plant unlocked! 🎉'}</p>
+        <p class="text-2xl mt-2 tracking-widest" aria-label="Plant types">${unlocked}</p>
       </section>
       <section>
         <h2 class="font-display text-lg font-medium mb-2">Up next</h2>
@@ -229,8 +239,8 @@ function render() {
   $('#energyText').textContent = `${dayEnergy()} / ${goal()}`;
   $('#bar').style.width = pct() + '%';
   $('#authChip').textContent = !sb ? '📴 Local mode' : S.user ? 'Sign out' : 'Sign in';
-  $('#acct').textContent = S.user ? '👤 ' + S.user.email : (sb ? '👤 Guest · not signed in' : '👤 Guest · saved on this device');
-  $('#view').innerHTML = ({ home:homeView, habits:habitsView, progress:progressView, focus:focusView, mood:moodView, todo:todoView })[S.tab]();
+  $('#acct').textContent = S.user ? '👤 ' + (S.prefs.name || S.user.email) : '👤 ' + (S.prefs.name || 'Guest') + ' · not signed in';
+  $('#view').innerHTML = ({ home:homeView, habits:habitsView, progress:progressView, focus:focusView, mood:moodView, todo:todoView, settings:settingsView })[S.tab]();
   document.querySelectorAll('.nav').forEach(b => {
     const on = b.dataset.v === S.tab;
     b.classList.toggle('bg-mint-100', on); b.classList.toggle('text-mint-700', on);

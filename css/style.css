@@ -68,3 +68,22 @@ body { font-family:'Nunito',sans-serif; color:#2b4a42; background:linear-gradien
   .to-top:hover svg { animation:nudge .6s ease infinite alternate; }
   @keyframes nudge { to { transform:translateY(-3px); } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } .reveal { opacity:1; transform:none; } html { scroll-behavior:auto; } }
+
+  /* ---------- dark mode ---------- */
+  html.dark { color-scheme:dark; }
+  html.dark body { background:linear-gradient(160deg,#0e1b1f 0%,#11231d 55%,#1c2314 100%); color:#e3f1ea; }
+  html.dark .bg-mint-50 { background:#10201d !important; }
+  html.dark header { background:linear-gradient(#143038,#10201d) !important; }
+  html.dark .card, html.dark .bg-white, html.dark dialog, html.dark input, html.dark select { background:#1a2a2c !important; color:#e3f1ea !important; }
+  html.dark [class*="bg-white/"], html.dark .chip, html.dark .btn-ghost { background:rgba(26,42,44,.85) !important; color:#e3f1ea !important; }
+  html.dark .bg-sky-100 { background:#233f4d !important; } html.dark .bg-butter-100 { background:#3a3618 !important; }
+  html.dark .bg-mint-100, html.dark [style*="d8f3e4"], html.dark .demo-row.on { background:#1f3b30 !important; }
+  html.dark .demo-row { background:#1a2a2c; }
+  html.dark .bg-butter-300 { background:#7a6a1c !important; color:#fff !important; }
+  html.dark .bg-sky-300 { color:#0e1b1f !important; }
+  html.dark [class*="text-ink"] { color:#b7d2c7 !important; }
+  html.dark .text-mint-700 { color:#7fd9b0 !important; }
+  html.dark .border-mint-300 { border-color:#2f5d4b; }
+  html.dark circle[stroke="#dff0fb"] { stroke:#233f4d; }
+  html.dark #toast { background:#e3f1ea !important; color:#10201d !important; }
+  html.dark .blob { opacity:.22; }

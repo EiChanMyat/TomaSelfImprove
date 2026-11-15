@@ -17,7 +17,8 @@ toma-web/
     ├── schema.sql                   tables, row-level security, starter habits (run first)
     ├── update-custom-habits.sql     custom habits update (run second)
     ├── update-v4.sql                manage all habits, custom focus timers, mood calendar (run third)
-    └── update-v5.sql                to-do list (run fourth)
+    ├── update-v5.sql                to-do list (run fourth)
+    └── update-v6.sql                profile names and delete my account (run fifth)
 ```
 
 ## Run locally
@@ -34,3 +35,5 @@ Commit and sync to GitHub; Vercel redeploys automatically.
 ## Landing page
 The first screen is a landing page (inside index.html, styled in css/style.css, logic in js/landing.js).
 Returning signed-in users and guests go straight to the app; click the title in the app to see the landing page again.
+
+Settings, dark mode, forgot password and the midnight refresh live in js/settings.js.

@@ -32,7 +32,7 @@ const AFFIRMATIONS = [
   'I deserve care, starting with my own.'
 ];
 
-const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY, moodRange:7, todos:[], focusDone:'',
+const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY, moodRange:7, todos:[], focusDone:'', prefs:{ name:'', garden:'' },
   calMonth:new Date(new Date().getFullYear(), new Date().getMonth(), 1), user:null, aff:new Date().getDate() % AFFIRMATIONS.length };
 const T = { sel:'f1', total:1500, left:1500, running:false, end:0, id:null };
 
@@ -52,6 +52,7 @@ function localLoad() {
   S.hist = get('toma-hist', {});
   S.moodMap = get('toma-moods', {});
   S.todos = get('toma-todos', []);
+  S.prefs = get('toma-prefs', { name:'', garden:'' });
   S.mood = S.moodMap[TODAY] || null;
   S.habits = get('toma-habits2', DEFAULT_HABITS.map(h => ({ ...h })));
   S.focus = get('toma-focus', DEFAULT_FOCUS.map(f => ({ ...f })));
@@ -77,7 +78,7 @@ async function cloudLoad() {
     sb.from('garden_stats').select('*').maybeSingle(),
     sb.from('moods').select('mood_date,mood').order('mood_date', { ascending:false }).limit(800),
     sb.from('habit_logs').select('log_date').gte('log_date', daysAgo(60)),
-    sb.from('user_settings').select('focus_types').maybeSingle(),
+    sb.from('user_settings').select('focus_types,display_name,garden_name').maybeSingle(),
     sb.from('todos').select('*').order('id')
   ]);
   S.habits = h.data || [];
@@ -88,6 +89,7 @@ async function cloudLoad() {
   S.mood = S.moodMap[TODAY] || null;
   S.hist = {}; (r.data || []).forEach(x => { S.hist[x.log_date] = (S.hist[x.log_date] || 0) + 1; });
   const ft = st.data && st.data.focus_types;
+  S.prefs = { name:(st.data && st.data.display_name) || '', garden:(st.data && st.data.garden_name) || '' };
   S.focus = ft && ft.length ? ft : DEFAULT_FOCUS.map(f => ({ ...f }));
   selectFocus(S.focus[0].id);
 }
