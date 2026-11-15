@@ -127,7 +127,7 @@ function confetti() {
 const curFocus = () => S.focus.find(f => f.id === T.sel) || S.focus[0];
 function selectFocus(id) {
   const f = S.focus.find(x => x.id === id) || S.focus[0];
-  stopTimer(); T.sel = f.id; T.total = T.left = f.minutes * 60;
+  stopTimer(); stopAlarm(); S.focusDone = ''; T.sel = f.id; T.total = T.left = f.minutes * 60;
 }
 function focusView() {
   const f = curFocus();
@@ -143,14 +143,18 @@ function focusView() {
       <div class="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
         <span id="time" class="font-display text-6xl font-semibold"></span>
         <span class="text-sm text-ink/60 break-words">${esc(f.name)} · ${f.minutes} min</span>
+        <span id="tstate" class="text-xs font-bold text-mint-700 mt-1 min-h-[1rem]"></span>
       </div>
     </div>
     <div class="flex gap-3 mt-6">
-      <button id="sbtn" data-a="startpause" class="px-8 py-3 rounded-2xl bg-mint-500 text-white font-bold text-lg"></button>
+      <button id="sbtn" data-a="startpause"></button>
       <button data-a="reset" class="px-5 py-3 rounded-2xl bg-butter-300 font-bold">Reset</button>
       <button data-a="editFocus" class="px-5 py-3 rounded-2xl bg-sky-100 font-bold">Edit</button>
     </div>
-    <p class="text-xs text-ink/60 mt-4">Finish a session to earn +15 💧</p>
+    ${S.focusDone ? `<div class="mt-5 mx-6 rounded-2xl bg-butter-100 p-4 text-center font-bold">${esc(S.focusDone)}
+      <button data-a="dismissDone" class="block mx-auto mt-2 text-sm bg-white rounded-full px-4 py-1.5">Got it 🌱</button></div>` : ''}
+    <button data-a="sound" class="mt-5 text-xs font-bold bg-sky-100 rounded-full px-3 py-1.5">${soundOn() ? '🔔 Alarm on' : '🔕 Alarm off'}</button>
+    <p class="text-xs text-ink/60 mt-3">Finish a session to earn +15 💧</p>
   </div></div>`;
 }
 function moodView() {
@@ -178,7 +182,7 @@ function moodView() {
       <button data-a="shuffle" class="mt-4 text-sm font-bold bg-white rounded-full px-4 py-1.5">Show another</button>
     </div>
   </section>
-  <section class="card p-4 self-start">
+  <div class="space-y-5 self-start"><section class="card p-4">
     <div class="flex items-center justify-between mb-3">
       <button data-a="calPrev" class="w-9 h-9 rounded-full bg-sky-100 font-bold" aria-label="Previous month">‹</button>
       <h2 class="font-display text-lg font-medium">${S.calMonth.toLocaleDateString('en', { month:'long', year:'numeric' })}</h2>
@@ -186,15 +190,48 @@ function moodView() {
     </div>
     <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-ink/60 mb-1">${['S','M','T','W','T','F','S'].map(x => `<span>${x}</span>`).join('')}</div>
     <div class="grid grid-cols-7 gap-1">${cells}</div>
-  </section></div>`;
+  </section>${moodPie()}</div></div>`;
 }
 
+const MOOD_COLORS = { happy:'#ffd84d', relaxed:'#9fdcbc', calm:'#a9d6f2', angry:'#ff9aa2', sad:'#c3b1e8' };
+function moodPie() {
+  const n = S.moodRange, counts = {};
+  for (let i = 0; i < n; i++) { const m = S.moodMap[daysAgo(i)]; if (m) counts[m] = (counts[m] || 0) + 1; }
+  const total = Object.values(counts).reduce((x, y) => x + y, 0);
+  let acc = 0;
+  const stops = MOODS.filter(m => counts[m.k]).map(m => { const from = acc; acc += counts[m.k] / total * 100; return `${MOOD_COLORS[m.k]} ${from}% ${acc}%`; }).join(',');
+  const legend = MOODS.map(m => `<li class="flex items-center gap-2 text-sm"><span class="w-3 h-3 rounded-full" style="background:${MOOD_COLORS[m.k]}"></span>${m.e} ${m.l}<span class="ml-auto font-bold">${counts[m.k] || 0}${total ? ' · ' + Math.round((counts[m.k] || 0) / total * 100) + '%' : ''}</span></li>`).join('');
+  return `<section class="card p-4">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3"><h2 class="font-display text-lg font-medium">Mood summary</h2>
+      <div class="flex gap-1">${[7, 15, 30].map(d => `<button data-a="range" data-v="${d}" aria-pressed="${S.moodRange === d}" class="px-3 py-1 rounded-full text-xs font-bold ${S.moodRange === d ? 'bg-sky-300' : 'bg-sky-100'}">${d} days</button>`).join('')}</div></div>
+    ${total ? `<div class="flex items-center gap-5"><div class="w-36 h-36 shrink-0 rounded-full" style="background:conic-gradient(${stops})" role="img" aria-label="Pie chart of your moods over the last ${n} days"></div><ul class="flex-1 space-y-1.5">${legend}</ul></div>
+      <p class="text-xs text-ink/60 mt-3">${total} of the last ${n} days logged.</p>`
+    : `<p class="text-sm text-ink/60 py-6 text-center">No moods logged in the last ${n} days yet. Pick a mood above to start. 🌱</p>`}
+  </section>`;
+}
+function todoView() {
+  const done = S.todos.filter(t => t.done).length;
+  return `<div class="max-w-xl mx-auto mt-2">
+    <h2 class="font-display text-xl font-medium mb-3">To-do list</h2>
+    <div class="flex gap-2 mb-4">
+      <input id="todoInput" maxlength="120" placeholder="Add a task, e.g. Wash the dishes" class="flex-1 min-w-0 border border-mint-300 rounded-2xl px-4 py-3 bg-white">
+      <button data-a="addTodo" class="bg-mint-500 text-white font-bold rounded-2xl px-5">Add</button>
+    </div>
+    ${S.todos.length ? `<div class="space-y-2">${S.todos.map(t => `<div class="card flex items-center gap-3 px-4 py-3" style="${t.done ? 'background:#d8f3e4' : ''}">
+        <button data-a="todo" data-v="${t.id}" aria-pressed="${!!t.done}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}: ${esc(t.text)}" class="w-9 h-9 shrink-0 rounded-full border-2 font-bold ${t.done ? 'bg-mint-500 border-mint-500 text-white' : 'border-mint-300 bg-white text-transparent'}">✓</button>
+        <span class="flex-1 min-w-0 break-words ${t.done ? 'line-through opacity-60' : ''}">${esc(t.text)}</span>
+        <button data-a="delTodo" data-v="${t.id}" class="w-8 h-8 rounded-full bg-butter-100 text-sm" aria-label="Delete ${esc(t.text)}">🗑️</button></div>`).join('')}</div>
+      <div class="flex items-center justify-between mt-4"><p class="text-sm text-ink/60">${done} of ${S.todos.length} done</p>
+        <button data-a="clearTodos" class="text-sm font-bold bg-white rounded-full px-4 py-2 shadow-sm">Clear all</button></div>`
+    : '<p class="card p-6 text-center">Nothing here yet. Add your first task above. ✨</p>'}
+  </div>`;
+}
 function render() {
   $('#energyText').textContent = `${dayEnergy()} / ${goal()}`;
   $('#bar').style.width = pct() + '%';
   $('#authChip').textContent = !sb ? '📴 Local mode' : S.user ? 'Sign out' : 'Sign in';
   $('#acct').textContent = S.user ? '👤 ' + S.user.email : (sb ? '👤 Guest · not signed in' : '👤 Guest · saved on this device');
-  $('#view').innerHTML = ({ home:homeView, habits:habitsView, progress:progressView, focus:focusView, mood:moodView })[S.tab]();
+  $('#view').innerHTML = ({ home:homeView, habits:habitsView, progress:progressView, focus:focusView, mood:moodView, todo:todoView })[S.tab]();
   document.querySelectorAll('.nav').forEach(b => {
     const on = b.dataset.v === S.tab;
     b.classList.toggle('bg-mint-100', on); b.classList.toggle('text-mint-700', on);
@@ -207,7 +244,10 @@ function paintTimer() {
   const t = $('#time'); if (!t) return;
   t.textContent = fmt(T.left);
   $('#ring').style.strokeDashoffset = 553 * (1 - T.left / T.total);
-  $('#sbtn').textContent = T.running ? 'Pause' : (T.left < T.total ? 'Resume' : 'Start');
+  const paused = !T.running && T.left < T.total;
+  $('#sbtn').textContent = T.running ? '⏸ Pause' : paused ? '▶ Resume' : '▶ Start';
+  $('#sbtn').className = 'px-8 py-3 rounded-2xl font-bold text-lg ' + (T.running ? 'bg-butter-300' : 'bg-mint-500 text-white');
+  $('#tstate').textContent = T.running ? 'Keep going…' : paused ? '⏸ Paused' : '';
 }
 function tick() {
   T.left = Math.max(0, Math.round((T.end - Date.now()) / 1000));
@@ -215,11 +255,24 @@ function tick() {
   if (T.left === 0) finishTimer();
 }
 function stopTimer() { clearInterval(T.id); T.running = false; }
+/* Alarm sound (assets/alarm-04.mp3) */
+const alarm = new Audio('assets/alarm-04.mp3');
+const soundOn = () => localStorage.getItem('toma-sound') !== 'off';
+function unlockAlarm() {   // browsers only allow sound after a tap, so warm it up on Start
+  alarm.muted = true;
+  const p = alarm.play();
+  if (p) p.then(() => { alarm.pause(); alarm.currentTime = 0; alarm.muted = false; }).catch(() => { alarm.muted = false; });
+}
+function stopAlarm() { alarm.pause(); alarm.currentTime = 0; }
+function ring() { if (!soundOn()) return; alarm.currentTime = 0; const p = alarm.play(); if (p) p.catch(() => {}); }
+
 async function finishTimer() {
   stopTimer();
   const f = curFocus(); S.energy += 15; localSave();
   T.left = T.total;
-  render(); toast(`${f.name} complete! +15 💧`);
+  const cheers = ['Amazing focus!', 'You did it!', 'Look at you go!', 'Great work!'];
+  S.focusDone = `🎉 ${cheers[Math.floor(Math.random() * cheers.length)]} You finished ${f.name} (${f.minutes} min) and earned +15 💧 for your garden.`;
+  render(); confetti(); ring(); cheer(`${f.name} complete! +15 💧`);
   if (cloud()) {
     await guard(sb.from('focus_sessions').insert({ user_id:S.user.id, category:f.name, minutes:f.minutes }));
     await guard(saveEnergy());
@@ -292,11 +345,44 @@ const actions = {
     if (cloud()) await guard(syncFocus());
   },
   startpause() {
-    if (T.running) { stopTimer(); }
-    else { T.end = Date.now() + T.left * 1000; T.running = true; T.id = setInterval(tick, 250); }
+    if (T.running) stopTimer();
+    else {
+      unlockAlarm(); stopAlarm();
+      if (S.focusDone) { S.focusDone = ''; render(); }
+      T.end = Date.now() + T.left * 1000; T.running = true; T.id = setInterval(tick, 250);
+    }
     paintTimer();
   },
-  reset() { stopTimer(); T.left = T.total; paintTimer(); },
+  reset() { stopTimer(); stopAlarm(); S.focusDone = ''; T.left = T.total; render(); },
+  dismissDone() { stopAlarm(); S.focusDone = ''; render(); },
+  sound() { localStorage.setItem('toma-sound', soundOn() ? 'off' : 'on'); stopAlarm(); render(); },
+  range: v => { S.moodRange = Number(v); render(); },
+  async addTodo() {
+    const el = $('#todoInput'), text = el.value.trim().slice(0, 120); if (!text) return el.focus();
+    let t = { id:Date.now(), text, done:false };
+    if (cloud()) {
+      const { data, error } = await sb.from('todos').insert({ text }).select().single();
+      if (error) return toast('Couldn’t save: ' + error.message);
+      t = data;
+    }
+    S.todos.push(t); localSave(); render(); $('#todoInput').focus();
+  },
+  async todo(v) {
+    const t = S.todos.find(x => x.id === Number(v)); if (!t) return;
+    t.done = !t.done; localSave(); render(); if (t.done) toast('Task done ✅');
+    if (cloud()) await guard(sb.from('todos').update({ done:t.done }).eq('id', t.id));
+  },
+  async delTodo(v) {
+    const id = Number(v); S.todos = S.todos.filter(x => x.id !== id); localSave(); render();
+    if (cloud()) await guard(sb.from('todos').delete().eq('id', id));
+  },
+  async clearTodos() {
+    if (!S.todos.length) return;
+    const left = S.todos.filter(t => !t.done).length;
+    if (!confirm(left ? `Clear all ${S.todos.length} tasks? ${left} aren’t done yet.` : 'Clear all tasks?')) return;
+    S.todos = []; localSave(); render(); toast('List cleared 🧹');
+    if (cloud()) await guard(sb.from('todos').delete().eq('user_id', S.user.id));
+  },
   async mood(v) {
     const day = S.moodDay, clear = S.moodMap[day] === v;
     if (clear) delete S.moodMap[day]; else S.moodMap[day] = v;
@@ -372,6 +458,8 @@ async function afterAuth() {
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-a]'); if (b && actions[b.dataset.a]) actions[b.dataset.a](b.dataset.v);
 });
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'todoInput') actions.addTodo(); });
 
 /* ============ 8. START ============ */
 localLoad(); render();

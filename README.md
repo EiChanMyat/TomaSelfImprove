@@ -9,13 +9,15 @@ Stack: HTML5, Tailwind CSS (CDN), vanilla JavaScript, Supabase.
 toma-web/
 ├── index.html                       page structure
 ├── css/style.css                    custom styles and animations
+├── assets/alarm-04.mp3              timer alarm sound
 ├── js/config.js                     Supabase URL + publishable key
 ├── js/data.js                       state, localStorage and Supabase data layer
 ├── js/app.js                        views, timer, actions, startup
 └── supabase/
     ├── schema.sql                   tables, row-level security, starter habits (run first)
     ├── update-custom-habits.sql     custom habits update (run second)
-    └── update-v4.sql                manage all habits, custom focus timers, mood calendar (run third)
+    ├── update-v4.sql                manage all habits, custom focus timers, mood calendar (run third)
+    └── update-v5.sql                to-do list (run fourth)
 ```
 
 ## Run locally

@@ -32,7 +32,7 @@ const AFFIRMATIONS = [
   'I deserve care, starting with my own.'
 ];
 
-const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY,
+const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY, moodRange:7, todos:[], focusDone:'',
   calMonth:new Date(new Date().getFullYear(), new Date().getMonth(), 1), user:null, aff:new Date().getDate() % AFFIRMATIONS.length };
 const T = { sel:'f1', total:1500, left:1500, running:false, end:0, id:null };
 
@@ -51,6 +51,7 @@ function localLoad() {
   S.done = new Set(d.date === TODAY ? d.done || [] : []);
   S.hist = get('toma-hist', {});
   S.moodMap = get('toma-moods', {});
+  S.todos = get('toma-todos', []);
   S.mood = S.moodMap[TODAY] || null;
   S.habits = get('toma-habits2', DEFAULT_HABITS.map(h => ({ ...h })));
   S.focus = get('toma-focus', DEFAULT_FOCUS.map(f => ({ ...f })));
@@ -65,19 +66,22 @@ function localSave() {
     localStorage.setItem('toma-moods', JSON.stringify(S.moodMap));
     localStorage.setItem('toma-habits2', JSON.stringify(S.habits));
     localStorage.setItem('toma-focus', JSON.stringify(S.focus));
+    localStorage.setItem('toma-todos', JSON.stringify(S.todos));
   } catch (e) {}
 }
 
 async function cloudLoad() {
-  const [h, l, g, m, r, st] = await Promise.all([
+  const [h, l, g, m, r, st, td] = await Promise.all([
     sb.from('habits').select('*').order('id'),
     sb.from('habit_logs').select('habit_id').eq('log_date', TODAY),
     sb.from('garden_stats').select('*').maybeSingle(),
     sb.from('moods').select('mood_date,mood').order('mood_date', { ascending:false }).limit(800),
     sb.from('habit_logs').select('log_date').gte('log_date', daysAgo(60)),
-    sb.from('user_settings').select('focus_types').maybeSingle()
+    sb.from('user_settings').select('focus_types').maybeSingle(),
+    sb.from('todos').select('*').order('id')
   ]);
   S.habits = h.data || [];
+  S.todos = td.data || [];
   S.done = new Set((l.data || []).map(x => x.habit_id));
   S.energy = g.data ? g.data.energy : 0;
   S.moodMap = {}; (m.data || []).forEach(x => { S.moodMap[x.mood_date] = x.mood; });

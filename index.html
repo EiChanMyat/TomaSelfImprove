@@ -32,18 +32,20 @@ tailwind.config = { theme: { extend: {
           <h1 class="font-display text-2xl md:text-3xl font-semibold leading-tight">Grow Daily, Care Deeply</h1>
           <p class="text-sm text-ink/70">Celebrate every tiny win</p>
         </div>
-        <nav class="hidden md:flex gap-2" aria-label="Main">
-          <button data-a="tab" data-v="home"   class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">🌱 Garden</button>
-          <button data-a="tab" data-v="habits" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">✅ Habits</button>
-          <button data-a="tab" data-v="progress" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">📈 Progress</button>
-          <button data-a="tab" data-v="focus"  class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">⏱️ Focus</button>
-          <button data-a="tab" data-v="mood"   class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">😊 Mood</button>
-        </nav>
+        
         <div class="shrink-0 flex items-center gap-2">
           <span id="acct" class="text-xs bg-white/70 rounded-full px-3 py-1.5 max-w-[140px] sm:max-w-[240px] truncate" title="Current account"></span>
           <button id="authChip" data-a="auth" class="text-xs font-bold bg-white rounded-full px-3 py-1.5 shadow-sm"></button>
         </div>
       </div>
+      <nav class="hidden md:flex flex-wrap gap-2 mt-3" aria-label="Main">
+          <button data-a="tab" data-v="home"   class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">🌱 Garden</button>
+          <button data-a="tab" data-v="habits" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">✅ Habits</button>
+          <button data-a="tab" data-v="progress" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">📈 Progress</button>
+          <button data-a="tab" data-v="focus"  class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">⏱️ Focus</button>
+          <button data-a="tab" data-v="mood"   class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">😊 Mood</button>
+          <button data-a="tab" data-v="todo" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">📝 To-do</button>
+        </nav>
       <div class="card mt-3 px-4 py-3">
         <div class="flex justify-between text-sm font-bold mb-1.5">
           <span>💧 Growth energy today</span><span id="energyText"></span>
@@ -62,12 +64,13 @@ tailwind.config = { theme: { extend: {
   <div id="toast" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-20 bg-ink text-white text-sm font-bold rounded-full px-4 py-2 shadow-lg whitespace-nowrap"></div>
 
   <!-- Bottom tabs on phones only -->
-  <nav class="md:hidden grid grid-cols-5 gap-1 px-3 pt-2 pb-[max(.75rem,env(safe-area-inset-bottom))] bg-white border-t border-mint-100" aria-label="Main">
+  <nav class="md:hidden grid grid-cols-6 gap-0.5 px-3 pt-2 pb-[max(.75rem,env(safe-area-inset-bottom))] bg-white border-t border-mint-100" aria-label="Main">
     <button data-a="tab" data-v="home"   class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">🌱</span>Garden</button>
     <button data-a="tab" data-v="habits" class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">✅</span>Habits</button>
     <button data-a="tab" data-v="progress" class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">📈</span>Progress</button>
     <button data-a="tab" data-v="focus"  class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">⏱️</span>Focus</button>
     <button data-a="tab" data-v="mood"   class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">😊</span>Mood</button>
+    <button data-a="tab" data-v="todo" class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">📝</span>To-do</button>
   </nav>
 </div>
 
