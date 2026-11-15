@@ -53,7 +53,7 @@ function homeView() {
     <section class="card p-6 flex flex-col items-center text-center self-start">
       ${toma('w-40 h-40')}
       <p class="font-bold mt-3">${msg}</p>
-      <div class="w-full grid grid-cols-3 gap-2 mt-4">${stat(Math.floor(S.energy / 100) + 1, 'Level')}${stat(S.energy, 'Total 💧')}${stat(S.done.size + '/' + S.habits.length, 'Habits')}</div>
+      <div class="w-full grid grid-cols-3 gap-2 mt-4">${stat(Math.floor(S.energy / 100) + 1, 'Level')}${stat(S.energy, 'Total 💧')}${stat(streak(), 'Day streak 🔥')}</div>
     </section>
     <div class="space-y-5">
       <section class="card p-5">
@@ -75,6 +75,54 @@ function habitsView() {
     </div>
     <div class="grid md:grid-cols-2 gap-3">${S.habits.map(habitRow).join('')}</div>
     <p class="text-center text-sm text-ink/60 mt-4">${S.done.size} of ${S.habits.length} done${cloud() ? '' : ' · sign in to keep your habits on every device'}</p>`;
+}
+/* Streak = consecutive days with at least one habit done (today may still be open) */
+function streak() {
+  let n = 0; const d = new Date();
+  if (!(S.hist[dateKey(d)] > 0)) d.setDate(d.getDate() - 1);
+  while (S.hist[dateKey(d)] > 0) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function week() {   // last 7 days, oldest first
+  return Array.from({ length:7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+    return { k:dateKey(d), label:d.toLocaleDateString('en', { weekday:'short' }), n:S.hist[dateKey(d)] || 0 };
+  });
+}
+function progressView() {
+  const w = week(), st = streak(), max = Math.max(S.habits.length, 1);
+  const total = w.reduce((a, d) => a + d.n, 0), active = w.filter(d => d.n > 0).length;
+  const bars = w.map(d => `<div class="flex-1 flex flex-col items-center gap-1">
+      <span class="text-xs font-bold">${d.n}</span>
+      <div class="w-full h-36 flex items-end"><div class="w-full rounded-t-xl ${d.k === TODAY ? 'bg-mint-500' : 'bg-sky-300'}" style="height:${Math.max(4, Math.min(100, Math.round(d.n / max * 100)))}%"></div></div>
+      <span class="text-xs ${d.k === TODAY ? 'font-bold' : 'text-ink/60'}">${d.label}</span></div>`).join('');
+  const msg = st === 0 ? 'Complete any habit today to start a streak.'
+    : S.hist[TODAY] > 0 ? 'You’re on a roll! Come back tomorrow to keep it going.'
+    : 'Do one habit today to keep your streak alive.';
+  return `<div class="grid md:grid-cols-[340px_1fr] gap-5 mt-2">
+    <section class="card p-6 text-center self-start">
+      <div class="text-5xl">🔥</div>
+      <p class="font-display text-6xl font-semibold mt-1">${st}</p>
+      <p class="font-bold">day streak</p>
+      <p class="text-sm text-ink/70 mt-3">${msg}</p>
+    </section>
+    <section class="card p-5">
+      <h2 class="font-display text-lg font-medium">This week</h2>
+      <p class="text-sm text-ink/60">Habits completed each day</p>
+      <div class="flex gap-2 mt-4">${bars}</div>
+      <p class="text-sm font-bold text-mint-700 mt-4">${total} habits done across ${active} of the last 7 days</p>
+    </section>
+  </div>`;
+}
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#ffd84d', '#4fb88a', '#5aaee0', '#ff9aa2', '#9fdcbc'];
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('i');
+    p.className = 'confetti';
+    p.style.cssText = `left:${Math.random() * 100}vw;background:${colors[i % 5]};animation-delay:${Math.random() * .4}s;--dx:${(Math.random() - .5) * 160}px`;
+    document.body.appendChild(p); setTimeout(() => p.remove(), 2400);
+  }
 }
 function focusView() {
   return `<div class="max-w-xl mx-auto"><div class="flex justify-center gap-2 mt-2">${Object.keys(CATS).map(c =>
@@ -117,7 +165,7 @@ function render() {
   $('#energyText').textContent = `${dayEnergy()} / ${goal()}`;
   $('#bar').style.width = pct() + '%';
   $('#authChip').textContent = !sb ? '📴 Local mode' : S.user ? 'Sign out' : 'Sign in';
-  $('#view').innerHTML = ({ home:homeView, habits:habitsView, focus:focusView, mood:moodView })[S.tab]();
+  $('#view').innerHTML = ({ home:homeView, habits:habitsView, progress:progressView, focus:focusView, mood:moodView })[S.tab]();
   document.querySelectorAll('.nav').forEach(b => {
     const on = b.dataset.v === S.tab;
     b.classList.toggle('bg-mint-100', on); b.classList.toggle('text-mint-700', on);
@@ -173,6 +221,7 @@ const actions = {
     S.energy = Math.max(0, S.energy + (on ? h.energy : -h.energy));
     localSave(); render();
     if (on) cheer(pct() === 100 ? 'All habits done! 🎉' : `+${h.energy} 💧 Nice!`);
+    if (on && pct() === 100) confetti();
     if (cloud()) {
       await guard(on
         ? sb.from('habit_logs').insert({ user_id:S.user.id, habit_id:id, log_date:TODAY })

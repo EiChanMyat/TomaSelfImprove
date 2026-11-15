@@ -3,7 +3,9 @@ const sb = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 /* ============ 2. STATE ============ */
-const TODAY = new Date().toISOString().slice(0, 10);
+const dateKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const TODAY = dateKey(new Date());   // your local date, so days roll over at your own midnight
+const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return dateKey(d); };
 const ICONS = { 1:'🥗', 2:'🚶‍♀️', 3:'💭', 4:'💧', 5:'🧘' };
 const DEFAULT_HABITS = [
   { id:1, title:'Control carbohydrates',  energy:10 },
@@ -41,33 +43,39 @@ const pct = () => Math.min(100, Math.round(dayEnergy() / (goal() || 1) * 100));
 
 /* ============ 3. DATA LAYER (localStorage + optional Supabase) ============ */
 function localLoad() {
-  S.habits = DEFAULT_HABITS.slice();
+  S.habits = DEFAULT_HABITS.slice(); S.hist = {};
   try {
     const d = JSON.parse(localStorage.getItem('toma-v1') || '{}');
     S.energy = d.energy || 0; S.done = new Set(); S.mood = null;
+    S.hist = JSON.parse(localStorage.getItem('toma-hist') || '{}');
     if (d.date === TODAY) { S.done = new Set(d.done || []); S.mood = d.mood || null; }
     S.habits = DEFAULT_HABITS.concat(JSON.parse(localStorage.getItem('toma-habits') || '[]'));
   } catch (e) {}
 }
 function localSave() {
   try {
+    S.hist[TODAY] = S.done.size;
     localStorage.setItem('toma-v1', JSON.stringify({ date:TODAY, done:[...S.done], energy:S.energy, mood:S.mood }));
+    if (!cloud()) localStorage.setItem('toma-hist', JSON.stringify(S.hist));
     if (!cloud()) localStorage.setItem('toma-habits', JSON.stringify(S.habits.filter(h => h.custom)));
   } catch (e) {}
 }
 const isCustom = h => !!(h.user_id || h.custom);   // a habit the user made themselves
 
 async function cloudLoad() {
-  const [h, l, g, m] = await Promise.all([
+  const [h, l, g, m, r] = await Promise.all([
     sb.from('habits').select('*').order('id'),
     sb.from('habit_logs').select('habit_id').eq('log_date', TODAY),
     sb.from('garden_stats').select('*').maybeSingle(),
-    sb.from('moods').select('mood').gte('created_at', TODAY).order('created_at', { ascending:false }).limit(1)
+    sb.from('moods').select('mood').gte('created_at', new Date(TODAY + 'T00:00:00').toISOString()).order('created_at', { ascending:false }).limit(1),
+    sb.from('habit_logs').select('log_date').gte('log_date', daysAgo(60))
   ]);
   if (h.data && h.data.length) S.habits = h.data;
   S.done = new Set((l.data || []).map(r => r.habit_id));
   S.energy = g.data ? g.data.energy : 0;
   S.mood = m.data && m.data[0] ? m.data[0].mood : null;
+  S.hist = {};
+  (r.data || []).forEach(x => { S.hist[x.log_date] = (S.hist[x.log_date] || 0) + 1; });
 }
 const saveEnergy = () => sb.from('garden_stats').upsert({ user_id:S.user.id, energy:S.energy, updated_at:new Date().toISOString() });
 async function guard(p) {

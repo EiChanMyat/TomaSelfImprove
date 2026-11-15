@@ -35,6 +35,7 @@ tailwind.config = { theme: { extend: {
         <nav class="hidden md:flex gap-2" aria-label="Main">
           <button data-a="tab" data-v="home"   class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">🌱 Garden</button>
           <button data-a="tab" data-v="habits" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">✅ Habits</button>
+          <button data-a="tab" data-v="progress" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">📈 Progress</button>
           <button data-a="tab" data-v="focus"  class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">⏱️ Focus</button>
           <button data-a="tab" data-v="mood"   class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">😊 Mood</button>
         </nav>
@@ -58,9 +59,10 @@ tailwind.config = { theme: { extend: {
   <div id="toast" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-20 bg-ink text-white text-sm font-bold rounded-full px-4 py-2 shadow-lg whitespace-nowrap"></div>
 
   <!-- Bottom tabs on phones only -->
-  <nav class="md:hidden grid grid-cols-4 gap-1 px-3 pt-2 pb-[max(.75rem,env(safe-area-inset-bottom))] bg-white border-t border-mint-100" aria-label="Main">
+  <nav class="md:hidden grid grid-cols-5 gap-1 px-3 pt-2 pb-[max(.75rem,env(safe-area-inset-bottom))] bg-white border-t border-mint-100" aria-label="Main">
     <button data-a="tab" data-v="home"   class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">🌱</span>Garden</button>
     <button data-a="tab" data-v="habits" class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">✅</span>Habits</button>
+    <button data-a="tab" data-v="progress" class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">📈</span>Progress</button>
     <button data-a="tab" data-v="focus"  class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">⏱️</span>Focus</button>
     <button data-a="tab" data-v="mood"   class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">😊</span>Mood</button>
   </nav>
