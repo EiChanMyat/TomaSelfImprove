@@ -87,3 +87,4 @@ body { font-family:'Nunito',sans-serif; color:#2b4a42; background:linear-gradien
   html.dark circle[stroke="#dff0fb"] { stroke:#233f4d; }
   html.dark #toast { background:#e3f1ea !important; color:#10201d !important; }
   html.dark .blob { opacity:.22; }
+  html.dark .bg-gradient-to-br { background-image:linear-gradient(to bottom right,#3a3618,#1f3b30) !important; }
