@@ -9,16 +9,15 @@ function cheer(msg) {
   toast(msg);
   const el = $('#toma'); if (el) { el.classList.remove('bounce'); el.offsetHeight; el.classList.add('bounce'); }
 }
-function toma(size = 'w-36 h-36') {
-  const mood = S.mood;
+function toma(size = 'w-36 h-36', mood = S.mood, id = 'toma') {
   const mouth = mood === 'sad' ? 'M42 71 Q50 64 58 71' : mood === 'angry' ? 'M43 69 H57' : 'M42 64 Q50 75 58 64';
   const brows = mood === 'angry' ? '<path d="M29 45 L42 50 M71 45 L58 50" stroke="#2b4a42" stroke-width="3" stroke-linecap="round"/>' : '';
-  return `<svg id="toma" viewBox="0 0 100 100" class="${size}" role="img" aria-label="Toma the yellow tomato">
+  return `<svg id="${id}" viewBox="0 0 100 100" class="${size}" role="img" aria-label="Toma the yellow tomato">
     <path d="M50 24 C44 10 34 10 29 15 C38 15 44 19 50 24 C56 19 62 15 71 15 C66 10 56 10 50 24Z" fill="#4fb88a"/>
     <rect x="48" y="12" width="4" height="13" rx="2" fill="#2c7a5c"/>
     <ellipse cx="50" cy="59" rx="40" ry="35" fill="#ffd84d"/>
     <ellipse cx="33" cy="44" rx="8" ry="5" fill="#fff" opacity=".45"/>
-    <circle cx="36" cy="56" r="4.5" fill="#2b4a42"/><circle cx="64" cy="56" r="4.5" fill="#2b4a42"/>
+    <circle class="eye" cx="36" cy="56" r="4.5" fill="#2b4a42"/><circle class="eye" cx="64" cy="56" r="4.5" fill="#2b4a42"/>
     <circle cx="37.5" cy="54.5" r="1.4" fill="#fff"/><circle cx="65.5" cy="54.5" r="1.4" fill="#fff"/>
     <ellipse cx="26" cy="66" rx="6" ry="4" fill="#ff9aa2" opacity=".6"/><ellipse cx="74" cy="66" rx="6" ry="4" fill="#ff9aa2" opacity=".6"/>
     ${brows}<path d="${mouth}" stroke="#2b4a42" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
@@ -434,7 +433,7 @@ const actions = {
   },
   async auth() {
     if (!sb) return toast('Add your Supabase keys to enable sign-in');
-    if (S.user) { await sb.auth.signOut(); S.user = null; localLoad(); render(); return toast('Signed out'); }
+    if (S.user) { await sb.auth.signOut(); S.user = null; localLoad(); render(); localStorage.removeItem('toma-guest'); showScreen('landing'); return; }
     $('#authMsg').textContent = ''; $('#authDlg').showModal();
   },
   closeAuth: () => $('#authDlg').close(),
@@ -453,7 +452,7 @@ async function afterAuth() {
   const { data } = await sb.auth.getSession();
   S.user = data.session ? data.session.user : null;
   if (S.user) await cloudLoad();
-  $('#authDlg').close(); render(); toast('Welcome back! 🌱');
+  $('#authDlg').close(); showScreen('app'); render(); toast('Welcome back! 🌱');
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-a]'); if (b && actions[b.dataset.a]) actions[b.dataset.a](b.dataset.v);
@@ -465,5 +464,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id
 localLoad(); render();
 if (sb) sb.auth.getSession().then(async ({ data }) => {
   S.user = data.session ? data.session.user : null;
-  if (S.user) { await cloudLoad(); render(); }
+  if (S.user) { await cloudLoad(); render(); showScreen('app'); }
+  else if (!localStorage.getItem('toma-guest')) showScreen('landing');
 });

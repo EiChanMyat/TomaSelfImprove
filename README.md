@@ -30,3 +30,7 @@ VS Code -> right-click index.html -> Open with Live Server.
 
 ## Deploy
 Commit and sync to GitHub; Vercel redeploys automatically.
+
+## Landing page
+The first screen is a landing page (inside index.html, styled in css/style.css, logic in js/landing.js).
+Returning signed-in users and guests go straight to the app; click the title in the app to see the landing page again.

@@ -19,8 +19,153 @@ tailwind.config = { theme: { extend: {
 }}};
 </script>
 <link rel="stylesheet" href="css/style.css">
+<script>
+  /* choose the first screen before anything is drawn: returning users go straight to the app */
+  (function () {
+    var hint = false;
+    try { hint = !!localStorage.getItem('toma-guest') || Object.keys(localStorage).some(function (k) { return /^sb-.*-auth-token$/.test(k); }); } catch (e) {}
+    document.documentElement.setAttribute('data-screen', hint ? 'app' : 'landing');
+  })();
+</script>
 </head>
 <body class="min-h-screen">
+
+<div id="landing">
+  <header id="landingNav" class="sticky top-0 z-40 backdrop-blur bg-white/70 border-b border-white/60 transition-shadow">
+    <div class="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
+      <a href="#top" class="flex items-center gap-2 font-display text-xl font-semibold"><span id="navToma" class="w-9 h-9"></span>Toma</a>
+      <nav class="hidden md:flex gap-7 text-sm font-bold text-ink/80" aria-label="Page sections">
+        <a href="#features" class="hover:text-mint-700">Features</a><a href="#how" class="hover:text-mint-700">How it works</a><a href="#why" class="hover:text-mint-700">Why Toma</a><a href="#faq" class="hover:text-mint-700">FAQ</a>
+      </nav>
+      <div data-guest class="flex items-center gap-2">
+        <button data-a="openSignin" class="text-sm font-bold px-4 py-2 rounded-full hover:bg-white">Sign in</button>
+        <button data-a="openSignup" class="text-sm font-bold px-4 py-2 rounded-full bg-mint-500 text-white shadow hover:bg-mint-700"><span class="hidden sm:inline">Create account</span><span class="sm:hidden">Sign up</span></button>
+      </div>
+      <div data-user class="hidden items-center gap-2">
+        <button data-a="openApp" class="text-sm font-bold px-4 py-2 rounded-full bg-mint-500 text-white shadow hover:bg-mint-700">Open my garden 🌱</button>
+      </div>
+    </div>
+  </header>
+
+  <section id="top" class="relative">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+    <div class="relative max-w-6xl mx-auto px-5 md:px-8 pt-12 pb-20 md:pt-20 grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <span class="chip reveal">✨ A free habit and self-care companion</span>
+        <h1 class="font-display text-5xl md:text-7xl font-semibold leading-[1.05] mt-5 reveal" style="--d:.08s">Grow daily,<br><span class="grad">care deeply.</span></h1>
+        <p class="mt-6 text-lg md:text-xl text-ink/75 max-w-lg reveal" style="--d:.16s">Toma is a gentle home for your <span class="words"><span>habits</span><span>focus time</span><span>moods</span><span>to-dos</span></span> Celebrate every tiny win and watch your garden bloom.</p>
+        <div data-guest class="mt-8 reveal" style="--d:.24s">
+          <div class="flex flex-wrap gap-3">
+            <button data-a="openSignup" class="btn-primary">Create free account 🌱</button>
+            <button data-a="enter" class="btn-ghost">Try it as a guest →</button>
+          </div>
+          <p class="mt-4 text-sm text-ink/60">Already have an account? <button data-a="openSignin" class="font-bold underline text-mint-700">Sign in</button></p>
+        </div>
+        <div data-user class="hidden mt-8 reveal" style="--d:.24s"><button data-a="openApp" class="btn-primary">Open my garden 🌱</button></div>
+      </div>
+      <div class="relative flex justify-center md:justify-end">
+        <span class="fl" style="top:6%;left:2%;--t:5s">💧</span><span class="fl" style="top:30%;right:0;--t:7s">🌸</span>
+        <span class="fl" style="bottom:12%;left:0;--t:6s">✨</span><span class="fl" style="bottom:2%;right:8%;--t:8s">🌱</span>
+        <div class="relative w-full max-w-sm pt-16 reveal" style="--d:.2s">
+          <div class="absolute left-1/2 -translate-x-1/2 top-0 z-10"><div id="heroToma" class="float w-32 h-32"></div></div>
+          <div class="card p-5 pt-20 relative">
+            <div class="flex justify-between text-sm font-bold mb-2"><span>💧 Growth energy today</span><span id="demoNum">0 / 35</span></div>
+            <div class="h-3 rounded-full bg-sky-100 overflow-hidden"><div id="demoBar" class="h-full rounded-full bg-gradient-to-r from-sky-300 to-mint-500" style="width:0%;transition:width .7s ease"></div></div>
+            <div class="demo-row"><span class="text-xl">🚶‍♀️</span><span class="flex-1 font-bold">Power walk 20 min</span><span class="demo-check">✓</span></div>
+            <div class="demo-row"><span class="text-xl">💧</span><span class="flex-1 font-bold">Drink 6 glasses of water</span><span class="demo-check">✓</span></div>
+            <div class="demo-row"><span class="text-xl">💭</span><span class="flex-1 font-bold">Think of a good memory</span><span class="demo-check">✓</span></div>
+            <p id="demoMsg" class="text-center text-sm font-bold text-mint-700 h-5 mt-3"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="py-4 bg-white/60 border-y border-white overflow-hidden" aria-hidden="true"><div class="marquee"><span class="font-display text-lg text-ink/70 whitespace-nowrap">🌱 Habits</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">⏱️ Focus timer</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">😊 Mood journal</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">📝 To-do list</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">🔥 Streaks</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">🌸 Garden</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">💧 Growth energy</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">🌱 Habits</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">⏱️ Focus timer</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">😊 Mood journal</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">📝 To-do list</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">🔥 Streaks</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">🌸 Garden</span><span class="font-display text-lg text-ink/70 whitespace-nowrap">💧 Growth energy</span></div></div>
+
+  <section id="features" class="max-w-6xl mx-auto px-5 md:px-8 py-20">
+    <div class="text-center max-w-2xl mx-auto reveal">
+      <span class="chip">Everything you need</span>
+      <h2 class="font-display text-4xl md:text-5xl font-semibold mt-4">One calm place for your daily self-care</h2>
+      <p class="text-ink/70 mt-3 text-lg">Six small tools that work together, so looking after yourself feels light and fun.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
+<div class="fcard card p-6 reveal" style="--d:0.00s"><div class="ficon w-14 h-14 rounded-2xl bg-mint-100 grid place-items-center text-3xl mb-4">✅</div><h3 class="font-display text-xl font-medium">Daily habits</h3><p class="text-ink/70 mt-1">Build your own checklist. Add, edit or delete habits and tick them off every day.</p></div>
+<div class="fcard card p-6 reveal" style="--d:0.08s"><div class="ficon w-14 h-14 rounded-2xl bg-butter-100 grid place-items-center text-3xl mb-4">🌱</div><h3 class="font-display text-xl font-medium">A garden that grows</h3><p class="text-ink/70 mt-1">Every habit waters your garden. Earn energy, grow plants and level up.</p></div>
+<div class="fcard card p-6 reveal" style="--d:0.16s"><div class="ficon w-14 h-14 rounded-2xl bg-sky-100 grid place-items-center text-3xl mb-4">⏱️</div><h3 class="font-display text-xl font-medium">Focus timers</h3><p class="text-ink/70 mt-1">Pomodoro-style timers with names and minutes you choose, plus a cheerful alarm.</p></div>
+<div class="fcard card p-6 reveal" style="--d:0.24s"><div class="ficon w-14 h-14 rounded-2xl bg-butter-100 grid place-items-center text-3xl mb-4">😊</div><h3 class="font-display text-xl font-medium">Mood journal</h3><p class="text-ink/70 mt-1">One tap a day, a monthly calendar and a pie chart of how you have been feeling.</p></div>
+<div class="fcard card p-6 reveal" style="--d:0.32s"><div class="ficon w-14 h-14 rounded-2xl bg-mint-100 grid place-items-center text-3xl mb-4">📝</div><h3 class="font-display text-xl font-medium">To-do list</h3><p class="text-ink/70 mt-1">Quick tasks that stay ticked until you decide to clear them.</p></div>
+<div class="fcard card p-6 reveal" style="--d:0.40s"><div class="ficon w-14 h-14 rounded-2xl bg-sky-100 grid place-items-center text-3xl mb-4">🔥</div><h3 class="font-display text-xl font-medium">Streaks and progress</h3><p class="text-ink/70 mt-1">Keep your streak alive and see your whole week at a glance.</p></div>
+    </div>
+  </section>
+
+  <section id="how" class="py-20 bg-white/50">
+    <div class="max-w-5xl mx-auto px-5 md:px-8">
+      <h2 class="font-display text-4xl md:text-5xl font-semibold text-center reveal">Start in three easy steps</h2>
+      <div class="grid md:grid-cols-3 gap-10 mt-12">
+<div class="reveal text-center" style="--d:0.00s"><div class="num mx-auto">1</div><h3 class="font-display text-xl font-medium mt-4">Create an account</h3><p class="text-ink/70 mt-1">Or try Toma as a guest first. No setup needed.</p></div>
+<div class="reveal text-center" style="--d:0.12s"><div class="num mx-auto">2</div><h3 class="font-display text-xl font-medium mt-4">Add your habits</h3><p class="text-ink/70 mt-1">Start with five starter habits or write your own.</p></div>
+<div class="reveal text-center" style="--d:0.24s"><div class="num mx-auto">3</div><h3 class="font-display text-xl font-medium mt-4">Watch yourself grow</h3><p class="text-ink/70 mt-1">Tick, focus, reflect, and see your garden bloom.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="why" class="max-w-6xl mx-auto px-5 md:px-8 py-20 grid md:grid-cols-2 gap-12 items-center">
+    <div class="reveal text-center">
+      <div id="meetToma" class="float w-48 h-48 mx-auto"></div>
+      <p id="meetText" class="font-bold mt-4 min-h-[3rem] px-4">Meet Toma! Tap a mood to see how Toma feels.</p>
+      <div class="flex justify-center gap-2 mt-2">
+        <button data-a="tomaMood" data-v="happy" class="card w-12 h-12 text-2xl hover:-translate-y-1 transition" aria-label="Happy">😄</button>
+        <button data-a="tomaMood" data-v="relaxed" class="card w-12 h-12 text-2xl hover:-translate-y-1 transition" aria-label="Relaxed">😌</button>
+        <button data-a="tomaMood" data-v="calm" class="card w-12 h-12 text-2xl hover:-translate-y-1 transition" aria-label="Calm">🙂</button>
+        <button data-a="tomaMood" data-v="angry" class="card w-12 h-12 text-2xl hover:-translate-y-1 transition" aria-label="Angry">😠</button>
+        <button data-a="tomaMood" data-v="sad" class="card w-12 h-12 text-2xl hover:-translate-y-1 transition" aria-label="Sad">😢</button>
+      </div>
+    </div>
+    <div>
+      <h2 class="font-display text-4xl md:text-5xl font-semibold reveal">Why you will love it</h2>
+      <ul class="space-y-6 mt-8">
+<li class="flex gap-4 reveal" style="--d:0.00s"><span class="text-3xl shrink-0">🌟</span><div><h3 class="font-bold text-lg">Tiny wins, big motivation</h3><p class="text-ink/70">Small rewards after every habit keep you coming back.</p></div></li>
+<li class="flex gap-4 reveal" style="--d:0.10s"><span class="text-3xl shrink-0">🫶</span><div><h3 class="font-bold text-lg">Gentle, never guilty</h3><p class="text-ink/70">No harsh scores or punishments. Missed a day? Start fresh today.</p></div></li>
+<li class="flex gap-4 reveal" style="--d:0.20s"><span class="text-3xl shrink-0">🧰</span><div><h3 class="font-bold text-lg">Everything in one place</h3><p class="text-ink/70">Habits, focus, moods and tasks together instead of five different apps.</p></div></li>
+<li class="flex gap-4 reveal" style="--d:0.30s"><span class="text-3xl shrink-0">🔒</span><div><h3 class="font-bold text-lg">Yours and private</h3><p class="text-ink/70">Signed-in data is locked to your account, and guests stay on their own device.</p></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="faq" class="py-20 bg-white/50">
+    <div class="max-w-3xl mx-auto px-5 md:px-8">
+      <h2 class="font-display text-4xl md:text-5xl font-semibold text-center reveal">Questions, answered</h2>
+      <div class="space-y-3 mt-10">
+<details class="card px-5 py-4 reveal" style="--d:0.00s"><summary class="font-bold cursor-pointer">Is Toma free?</summary><p class="text-ink/70 mt-2">Yes. Toma is free to use.</p></details>
+<details class="card px-5 py-4 reveal" style="--d:0.06s"><summary class="font-bold cursor-pointer">Do I need an account?</summary><p class="text-ink/70 mt-2">No. You can try everything as a guest on this device. Create an account to keep your habits, moods and progress across devices.</p></details>
+<details class="card px-5 py-4 reveal" style="--d:0.12s"><summary class="font-bold cursor-pointer">Is my data private?</summary><p class="text-ink/70 mt-2">When you sign in, your data is protected by row-level security, so only your account can read or change it.</p></details>
+<details class="card px-5 py-4 reveal" style="--d:0.18s"><summary class="font-bold cursor-pointer">Does it work on my phone?</summary><p class="text-ink/70 mt-2">Yes. Toma is built mobile-first and adapts from phones to big screens.</p></details>
+<details class="card px-5 py-4 reveal" style="--d:0.24s"><summary class="font-bold cursor-pointer">Can I make my own habits and timers?</summary><p class="text-ink/70 mt-2">Absolutely. Add, edit or delete habits, and create focus timers with any name and length.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="px-5 md:px-8 py-20">
+    <div class="cta max-w-4xl mx-auto rounded-[2rem] p-10 md:p-14 text-center text-white reveal">
+      <h2 class="font-display text-4xl md:text-5xl font-semibold relative">Ready to start growing?</h2>
+      <p class="text-lg mt-3 text-white/90 relative">Your garden is waiting. It takes less than a minute.</p>
+      <div data-guest class="mt-8 flex flex-wrap justify-center gap-3 relative">
+        <button data-a="openSignup" class="btn-ghost text-mint-700">Create free account</button>
+        <button data-a="openSignin" class="font-bold px-6 py-3 rounded-full border-2 border-white/80 hover:bg-white/20 transition">Sign in</button>
+      </div>
+      <div data-user class="hidden mt-8 justify-center relative"><button data-a="openApp" class="btn-ghost text-mint-700">Open my garden 🌱</button></div>
+      <span class="fl" style="top:12%;left:6%;--t:6s">🌱</span><span class="fl" style="bottom:14%;right:7%;--t:7s">💧</span><span class="fl" style="top:18%;right:12%;--t:5s">✨</span>
+    </div>
+  </section>
+
+  <footer class="text-center text-sm text-ink/60 pb-10">
+    <p class="font-display text-lg text-ink">Toma 🍅</p>
+    <p>A capstone project, made with care and a little bit of sunshine.</p>
+  </footer>
+</div>
+
+
 
 <div id="app" class="relative flex flex-col w-full h-[100dvh] bg-mint-50">
 
@@ -29,7 +174,7 @@ tailwind.config = { theme: { extend: {
     <div class="max-w-6xl mx-auto px-5 md:px-8">
       <div class="flex items-center justify-between gap-4">
         <div>
-          <h1 class="font-display text-2xl md:text-3xl font-semibold leading-tight">Grow Daily, Care Deeply</h1>
+          <h1 data-a="home" title="Back to the home page" class="font-display text-2xl md:text-3xl font-semibold leading-tight cursor-pointer">Grow Daily, Care Deeply</h1>
           <p class="text-sm text-ink/70">Celebrate every tiny win</p>
         </div>
         
@@ -76,8 +221,8 @@ tailwind.config = { theme: { extend: {
 
 <!-- Sign-in sheet (only used when Supabase is configured) -->
 <dialog id="authDlg" class="rounded-3xl p-6 w-[320px] backdrop:bg-ink/40">
-  <h2 class="font-display text-xl font-semibold mb-1">Save your garden</h2>
-  <p class="text-sm text-ink/70 mb-4">Sign in to keep your habits and energy across devices.</p>
+  <h2 id="authTitle" class="font-display text-xl font-semibold mb-1">Save your garden</h2>
+  <p id="authSub" class="text-sm text-ink/70 mb-4">Sign in to keep your habits and energy across devices.</p>
   <input id="email" type="email" placeholder="Email" autocomplete="email" class="w-full border border-mint-300 rounded-xl px-3 py-2 mb-2">
   <input id="pass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password" class="w-full border border-mint-300 rounded-xl px-3 py-2 mb-3">
   <p id="authMsg" class="text-sm text-mint-700 min-h-[1.25rem] mb-2"></p>
@@ -125,5 +270,6 @@ tailwind.config = { theme: { extend: {
 <script src="js/config.js"></script>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
+<script src="js/landing.js"></script>
 </body>
 </html>
