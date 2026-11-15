@@ -61,4 +61,10 @@ body { font-family:'Nunito',sans-serif; color:#2b4a42; background:linear-gradien
   details > summary { list-style:none; } details > summary::-webkit-details-marker { display:none; }
   details > summary::after { content:'+'; float:right; font-weight:800; color:#2c7a5c; transition:transform .3s; }
   details[open] > summary::after { transform:rotate(45deg); }
+  /* back-to-top button */
+  .to-top { position:fixed; right:max(1.25rem, env(safe-area-inset-right)); bottom:max(1.25rem, env(safe-area-inset-bottom)); z-index:45; width:3.25rem; height:3.25rem; border-radius:9999px; display:grid; place-items:center; color:#fff; background:linear-gradient(135deg,#4fb88a,#2c7a5c); box-shadow:0 10px 24px rgba(44,122,92,.4); visibility:hidden; opacity:0; transform:translateY(16px) scale(.8); transition:opacity .3s, transform .3s, visibility .3s, box-shadow .2s; }
+  .to-top.show { visibility:visible; opacity:1; transform:none; }
+  .to-top:hover { transform:translateY(-4px) scale(1.08); box-shadow:0 16px 30px rgba(44,122,92,.5); }
+  .to-top:hover svg { animation:nudge .6s ease infinite alternate; }
+  @keyframes nudge { to { transform:translateY(-3px); } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } .reveal { opacity:1; transform:none; } html { scroll-behavior:auto; } }

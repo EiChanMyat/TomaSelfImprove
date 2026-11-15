@@ -24,6 +24,7 @@ Object.assign(actions, {
   home: () => showScreen('landing'),
   enter: () => { localStorage.setItem('toma-guest', '1'); showScreen('app'); },
   openApp: () => showScreen('app'),
+  toTop: () => window.scrollTo({ top:0, behavior:'smooth' }),
   openSignin: () => openAuth('signin'),
   openSignup: () => openAuth('signup'),
   tomaMood: v => { $('#meetToma').innerHTML = toma('w-full h-full', v, 'meetTomaSvg'); $('#meetText').textContent = TOMA_SAYS[v]; }
@@ -37,7 +38,10 @@ updateLanding();
 /* reveal on scroll */
 const reveal = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); reveal.unobserve(e.target); } }), { threshold:.12 });
 document.querySelectorAll('.reveal').forEach(el => reveal.observe(el));
-window.addEventListener('scroll', () => $('#landingNav').classList.toggle('shadow-md', window.scrollY > 10), { passive:true });
+window.addEventListener('scroll', () => {
+  $('#landingNav').classList.toggle('shadow-md', window.scrollY > 10);
+  $('#toTop').classList.toggle('show', window.scrollY > 400);   // back-to-top button appears after scrolling down
+}, { passive:true });
 
 /* live demo card: habits tick themselves and the bar fills */
 (function demo() {
