@@ -33,9 +33,9 @@ body { font-family:'Nunito',sans-serif; color:#2b4a42; background:linear-gradien
   .grad { background:linear-gradient(90deg,#2c7a5c,#5aaee0,#f5c518,#2c7a5c); background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent; animation:shine 6s linear infinite; }
   @keyframes shine { to { background-position:200% center; } }
   .words { display:inline-block; position:relative; height:1.5em; min-width:6.5em; vertical-align:bottom; font-weight:800; color:#2c7a5c; }
-  .words span { position:absolute; left:0; opacity:0; animation:word 12s infinite; white-space:nowrap; }
-  .words span:nth-child(2) { animation-delay:3s; } .words span:nth-child(3) { animation-delay:6s; } .words span:nth-child(4) { animation-delay:9s; }
-  @keyframes word { 0% { opacity:0; transform:translateY(60%); } 4%,22% { opacity:1; transform:none; } 26%,100% { opacity:0; transform:translateY(-60%); } }
+  .words span { position:absolute; left:0; opacity:0; animation:word 15s infinite; white-space:nowrap; }
+  .words span:nth-child(2) { animation-delay:3s; } .words span:nth-child(3) { animation-delay:6s; } .words span:nth-child(4) { animation-delay:9s; } .words span:nth-child(5) { animation-delay:12s; }
+  @keyframes word { 0% { opacity:0; transform:translateY(60%); } 3%,17% { opacity:1; transform:none; } 20%,100% { opacity:0; transform:translateY(-60%); } }
   .chip { display:inline-block; background:#fff; border-radius:9999px; padding:.35rem .95rem; font-size:.8rem; font-weight:800; color:#2c7a5c; box-shadow:0 4px 14px rgba(44,122,92,.12); }
   .btn-primary { position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:.5rem; font-weight:800; color:#fff; background:linear-gradient(135deg,#4fb88a,#2c7a5c); padding:.9rem 1.7rem; border-radius:9999px; box-shadow:0 8px 22px rgba(44,122,92,.35); transition:transform .2s, box-shadow .2s; }
   .btn-primary:hover { transform:translateY(-3px) scale(1.03); box-shadow:0 14px 30px rgba(44,122,92,.4); }
