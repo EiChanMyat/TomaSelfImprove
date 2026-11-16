@@ -18,7 +18,8 @@ toma-web/
     ├── update-custom-habits.sql     custom habits update (run second)
     ├── update-v4.sql                manage all habits, custom focus timers, mood calendar (run third)
     ├── update-v5.sql                to-do list (run fourth)
-    └── update-v6.sql                profile names and delete my account (run fifth)
+    ├── update-v6.sql                profile names and delete my account (run fifth)
+    └── update-v7.sql                habit schedules and achievements (run sixth)
 ```
 
 ## Run locally
@@ -37,3 +38,5 @@ The first screen is a landing page (inside index.html, styled in css/style.css, 
 Returning signed-in users and guests go straight to the app; click the title in the app to see the landing page again.
 
 Settings, dark mode, forgot password and the midnight refresh live in js/settings.js.
+
+Insights and achievements live in js/insights.js (shown on the Progress tab).

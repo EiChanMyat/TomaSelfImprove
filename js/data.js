@@ -32,15 +32,18 @@ const AFFIRMATIONS = [
   'I deserve care, starting with my own.'
 ];
 
-const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY, moodRange:7, todos:[], focusDone:'', prefs:{ name:'', garden:'' },
+const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY, moodRange:7, todos:[], focusDone:'', prefs:{ name:'', garden:'' }, flog:[], badges:{},
   calMonth:new Date(new Date().getFullYear(), new Date().getMonth(), 1), user:null, aff:new Date().getDate() % AFFIRMATIONS.length };
 const T = { sel:'f1', total:1500, left:1500, running:false, end:0, id:null };
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cloud = () => sb && S.user;
-const goal = () => S.habits.reduce((a, h) => a + h.energy, 0);
-const dayEnergy = () => S.habits.filter(h => S.done.has(h.id)).reduce((a, h) => a + h.energy, 0);
+const todayDow = () => new Date().getDay();
+const onDay = (h, dow) => !h.days || !h.days.length || h.days.includes(dow);   // schedule: empty = every day
+const todays = () => S.habits.filter(h => onDay(h, todayDow()));               // habits scheduled for today
+const goal = () => todays().reduce((a, h) => a + h.energy, 0);
+const dayEnergy = () => todays().filter(h => S.done.has(h.id)).reduce((a, h) => a + h.energy, 0);
 const pct = () => Math.min(100, Math.round(dayEnergy() / (goal() || 1) * 100));
 
 /* ============ 3. DATA LAYER (localStorage + optional Supabase) ============ */
@@ -53,6 +56,8 @@ function localLoad() {
   S.moodMap = get('toma-moods', {});
   S.todos = get('toma-todos', []);
   S.prefs = get('toma-prefs', { name:'', garden:'' });
+  S.flog = get('toma-flog', []);
+  S.badges = get('toma-badges', {});
   S.mood = S.moodMap[TODAY] || null;
   S.habits = get('toma-habits2', DEFAULT_HABITS.map(h => ({ ...h })));
   S.focus = get('toma-focus', DEFAULT_FOCUS.map(f => ({ ...f })));
@@ -68,18 +73,21 @@ function localSave() {
     localStorage.setItem('toma-habits2', JSON.stringify(S.habits));
     localStorage.setItem('toma-focus', JSON.stringify(S.focus));
     localStorage.setItem('toma-todos', JSON.stringify(S.todos));
+    localStorage.setItem('toma-flog', JSON.stringify(S.flog));
+    localStorage.setItem('toma-badges', JSON.stringify(S.badges));
   } catch (e) {}
 }
 
 async function cloudLoad() {
-  const [h, l, g, m, r, st, td] = await Promise.all([
+  const [h, l, g, m, r, st, td, fq] = await Promise.all([
     sb.from('habits').select('*').order('id'),
     sb.from('habit_logs').select('habit_id').eq('log_date', TODAY),
     sb.from('garden_stats').select('*').maybeSingle(),
     sb.from('moods').select('mood_date,mood').order('mood_date', { ascending:false }).limit(800),
     sb.from('habit_logs').select('log_date').gte('log_date', daysAgo(60)),
-    sb.from('user_settings').select('focus_types,display_name,garden_name').maybeSingle(),
-    sb.from('todos').select('*').order('id')
+    sb.from('user_settings').select('focus_types,display_name,garden_name,badges').maybeSingle(),
+    sb.from('todos').select('*').order('id'),
+    sb.from('focus_sessions').select('created_at,minutes').order('created_at', { ascending:false }).limit(500)
   ]);
   S.habits = h.data || [];
   S.todos = td.data || [];
@@ -91,6 +99,9 @@ async function cloudLoad() {
   const ft = st.data && st.data.focus_types;
   S.prefs = { name:(st.data && st.data.display_name) || '', garden:(st.data && st.data.garden_name) || '' };
   S.focus = ft && ft.length ? ft : DEFAULT_FOCUS.map(f => ({ ...f }));
+  S.flog = (fq.data || []).map(x => ({ d:dateKey(new Date(x.created_at)), m:x.minutes }));
+  S.badges = (st.data && st.data.badges) || {};
+  if (typeof checkBadges === 'function') checkBadges(false);   // quietly award anything already earned
   selectFocus(S.focus[0].id);
 }
 const saveEnergy = () => sb.from('garden_stats').upsert({ user_id:S.user.id, energy:S.energy, updated_at:new Date().toISOString() });

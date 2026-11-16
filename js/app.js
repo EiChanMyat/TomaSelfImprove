@@ -25,18 +25,21 @@ function toma(size = 'w-36 h-36', mood = S.mood, id = 'toma') {
 const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
 
 /* ============ 5. VIEWS ============ */
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const daysLabel = h => h.days && h.days.length && h.days.length < 7 ? h.days.map(d => DOW[d]).join(' · ') : 'Every day';
 function habitRow(h, manage) {
-  const on = S.done.has(h.id);
+  const on = S.done.has(h.id), today = onDay(h, todayDow());
   return `<div class="card flex items-center gap-2 px-4 py-3" style="${on ? 'background:#d8f3e4' : ''}">
     <span class="text-2xl">${esc(h.icon || '🌟')}</span>
     <div class="flex-1 min-w-0 pl-1">
       <p class="font-bold break-words ${on ? 'line-through opacity-60' : ''}">${esc(h.title)}</p>
-      <p class="text-xs text-ink/60">+${h.energy} 💧</p>
+      <p class="text-xs text-ink/60">+${h.energy} 💧${manage ? ' · ' + daysLabel(h) : ''}</p>
     </div>
     ${manage ? `<button data-a="editHabit" data-v="${h.id}" class="w-9 h-9 rounded-full bg-sky-100 text-sm" aria-label="Edit ${esc(h.title)}">✏️</button>
     <button data-a="deleteHabit" data-v="${h.id}" class="w-9 h-9 rounded-full bg-butter-100 text-sm" aria-label="Delete ${esc(h.title)}">🗑️</button>` : ''}
-    <button data-a="toggle" data-v="${h.id}" aria-pressed="${on}" aria-label="${on ? 'Undo' : 'Complete'} ${esc(h.title)}"
-      class="w-10 h-10 rounded-full border-2 text-lg font-bold ${on ? 'bg-mint-500 border-mint-500 text-white pop' : 'border-mint-300 bg-white text-transparent'}">✓</button>
+    ${today ? `<button data-a="toggle" data-v="${h.id}" aria-pressed="${on}" aria-label="${on ? 'Undo' : 'Complete'} ${esc(h.title)}"
+      class="w-10 h-10 rounded-full border-2 text-lg font-bold ${on ? 'bg-mint-500 border-mint-500 text-white pop' : 'border-mint-300 bg-white text-transparent'}">✓</button>`
+      : '<span class="text-xs font-bold text-ink/60 px-2" title="Not scheduled today">😴 Rest day</span>'}
   </div>`;
 }
 const SPECIES = [{ e:'🌷', n:'Tulip', lv:1 }, { e:'🌻', n:'Sunflower', lv:1 }, { e:'🌼', n:'Daisy', lv:2 }, { e:'🌸', n:'Blossom', lv:3 },
@@ -72,7 +75,7 @@ function homeView() {
       </section>
       <section>
         <h2 class="font-display text-lg font-medium mb-2">Up next</h2>
-        <div class="grid sm:grid-cols-2 gap-2">${S.habits.filter(h => !S.done.has(h.id)).slice(0, 4).map(h => habitRow(h)).join('') || '<p class="card p-4 text-sm">Every habit is done. Take a deep breath. 🌸</p>'}</div>
+        <div class="grid sm:grid-cols-2 gap-2">${todays().filter(h => !S.done.has(h.id)).slice(0, 4).map(h => habitRow(h)).join('') || '<p class="card p-4 text-sm">Every habit is done. Take a deep breath. 🌸</p>'}</div>
       </section>
     </div>
   </div>`;
@@ -84,12 +87,16 @@ function habitsView() {
     </div>
     ${S.habits.length ? `<div class="grid md:grid-cols-2 gap-3">${S.habits.map(h => habitRow(h, true)).join('')}</div>`
       : '<p class="card p-6 text-center">No habits yet. Tap “+ Add habit” to create your first one. 🌱</p>'}
-    <p class="text-center text-sm text-ink/60 mt-4">${S.done.size} of ${S.habits.length} done${cloud() ? '' : ' · sign in to keep your habits on every device'}</p>`;
+    <p class="text-center text-sm text-ink/60 mt-4">${todays().filter(h => S.done.has(h.id)).length} of ${todays().length} done today${cloud() ? '' : ' · sign in to keep your habits on every device'}</p>`;
 }
-function streak() {
+function streak() {   // consecutive days with a habit done; days with nothing scheduled don't break it
   let n = 0; const d = new Date();
-  if (!(S.hist[dateKey(d)] > 0)) d.setDate(d.getDate() - 1);
-  while (S.hist[dateKey(d)] > 0) { n++; d.setDate(d.getDate() - 1); }
+  for (let i = 0; i < 400; i++, d.setDate(d.getDate() - 1)) {
+    if (S.hist[dateKey(d)] > 0) n++;
+    else if (i === 0) continue;                                        // today is still open
+    else if (!S.habits.some(h => onDay(h, d.getDay()))) continue;      // rest day
+    else break;
+  }
   return n;
 }
 function week() {   // last 7 days, oldest first
@@ -121,7 +128,8 @@ function progressView() {
       <div class="flex gap-2 mt-4">${bars}</div>
       <p class="text-sm font-bold text-mint-700 mt-4">${total} habits done across ${active} of the last 7 days</p>
     </section>
-  </div>`;
+  </div>
+  <div class="space-y-5 mt-5">${insightsView()}${badgesView()}</div>`;
 }
 function confetti() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -277,11 +285,11 @@ function ring() { if (!soundOn()) return; alarm.currentTime = 0; const p = alarm
 
 async function finishTimer() {
   stopTimer();
-  const f = curFocus(); S.energy += 15; localSave();
+  const f = curFocus(); S.energy += 15; S.flog.push({ d:TODAY, m:f.minutes }); localSave();
   T.left = T.total;
   const cheers = ['Amazing focus!', 'You did it!', 'Look at you go!', 'Great work!'];
   S.focusDone = `🎉 ${cheers[Math.floor(Math.random() * cheers.length)]} You finished ${f.name} (${f.minutes} min) and earned +15 💧 for your garden.`;
-  render(); confetti(); ring(); cheer(`${f.name} complete! +15 💧`);
+  render(); confetti(); ring(); cheer(`${f.name} complete! +15 💧`); checkBadges();
   if (cloud()) {
     await guard(sb.from('focus_sessions').insert({ user_id:S.user.id, category:f.name, minutes:f.minutes }));
     await guard(saveEnergy());
@@ -301,9 +309,14 @@ function openFocus(id) {
 }
 
 /* Open the add / edit habit dialog (id = null means a new habit) */
+function paintDays() {
+  $('#hDays').innerHTML = DOW.map((n, i) => { const on = S.editDays.includes(i);
+    return `<button type="button" data-a="toggleDay" data-v="${i}" aria-pressed="${on}" aria-label="${n}" class="flex-1 py-2 rounded-lg text-xs font-bold ${on ? 'bg-mint-500 text-white' : 'bg-sky-100'}">${n[0]}</button>`; }).join('');
+}
 function openHabit(id) {
   const h = id == null ? null : S.habits.find(x => x.id === id);
   S.editId = h ? h.id : null;
+  S.editDays = h && h.days && h.days.length ? [...h.days] : [0, 1, 2, 3, 4, 5, 6]; paintDays();
   $('#habitTitle').textContent = h ? 'Edit habit' : 'New habit';
   $('#hTitle').value = h ? h.title : '';
   $('#hEnergy').value = h ? h.energy : 10;
@@ -324,6 +337,7 @@ const actions = {
     localSave(); render();
     if (on) cheer(pct() === 100 ? 'All habits done! 🎉' : `+${h.energy} 💧 Nice!`);
     if (on && pct() === 100) confetti();
+    checkBadges();
     if (cloud()) {
       await guard(on
         ? sb.from('habit_logs').insert({ user_id:S.user.id, habit_id:id, log_date:TODAY })
@@ -378,7 +392,7 @@ const actions = {
   },
   async todo(v) {
     const t = S.todos.find(x => x.id === Number(v)); if (!t) return;
-    t.done = !t.done; localSave(); render(); if (t.done) toast('Task done ✅');
+    t.done = !t.done; localSave(); render(); if (t.done) { toast('Task done ✅'); checkBadges(); }
     if (cloud()) await guard(sb.from('todos').update({ done:t.done }).eq('id', t.id));
   },
   async delTodo(v) {
@@ -396,7 +410,7 @@ const actions = {
     const day = S.moodDay, clear = S.moodMap[day] === v;
     if (clear) delete S.moodMap[day]; else S.moodMap[day] = v;
     S.mood = S.moodMap[TODAY] || null;
-    localSave(); render(); toast(clear ? 'Mood cleared' : 'Mood saved');
+    localSave(); render(); toast(clear ? 'Mood cleared' : 'Mood saved'); if (!clear) checkBadges();
     if (cloud()) await guard(clear
       ? sb.from('moods').delete().match({ user_id:S.user.id, mood_date:day })
       : sb.from('moods').upsert({ user_id:S.user.id, mood_date:day, mood:v }, { onConflict:'user_id,mood_date' }));
@@ -412,11 +426,13 @@ const actions = {
     const title = $('#hTitle').value.trim().slice(0, 60);
     if (!title) return ($('#hMsg').textContent = 'Give your habit a name.');
     const energy = Number($('#hEnergy').value), icon = $('#hIcon').value, id = S.editId;
+    if (!S.editDays.length) return ($('#hMsg').textContent = 'Pick at least one day.');
+    const days = S.editDays.length === 7 ? null : [...S.editDays].sort((x, y) => x - y);
     $('#habitDlg').close();
     if (id == null) {
-      let h = { id:Date.now(), title, energy, icon, custom:true };
+      let h = { id:Date.now(), title, energy, icon, days, custom:true };
       if (cloud()) {
-        const { data, error } = await sb.from('habits').insert({ title, energy, icon }).select().single();
+        const { data, error } = await sb.from('habits').insert({ title, energy, icon, days }).select().single();
         if (error) return toast('Couldn’t save: ' + error.message);
         h = data;
       }
@@ -424,9 +440,9 @@ const actions = {
     } else {
       const h = S.habits.find(x => x.id === id); if (!h) return;
       if (S.done.has(id)) S.energy = Math.max(0, S.energy + energy - h.energy);
-      Object.assign(h, { title, energy, icon }); toast('Habit updated');
+      Object.assign(h, { title, energy, icon, days }); toast('Habit updated');
       if (cloud()) {
-        await guard(sb.from('habits').update({ title, energy, icon }).eq('id', id));
+        await guard(sb.from('habits').update({ title, energy, icon, days }).eq('id', id));
         if (S.done.has(id)) await guard(saveEnergy());
       }
     }
@@ -441,6 +457,7 @@ const actions = {
     localSave(); render(); toast('Habit deleted');
     if (cloud()) { await guard(sb.from('habits').delete().eq('id', id)); await guard(saveEnergy()); }
   },
+  toggleDay(v) { const d = Number(v), i = S.editDays.indexOf(d); i < 0 ? S.editDays.push(d) : S.editDays.splice(i, 1); paintDays(); },
   async auth() {
     if (!sb) return toast('Add your Supabase keys to enable sign-in');
     if (S.user) { await sb.auth.signOut(); S.user = null; localLoad(); render(); localStorage.removeItem('toma-guest'); showScreen('landing'); return; }
