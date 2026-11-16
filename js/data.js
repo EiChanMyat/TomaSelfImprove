@@ -97,7 +97,7 @@ async function cloudLoad() {
   S.mood = S.moodMap[TODAY] || null;
   S.hist = {}; (r.data || []).forEach(x => { S.hist[x.log_date] = (S.hist[x.log_date] || 0) + 1; });
   const ft = st.data && st.data.focus_types;
-  S.prefs = { name:(st.data && st.data.display_name) || '', garden:(st.data && st.data.garden_name) || '' };
+  S.prefs = { name:(st.data && st.data.display_name) || (S.user.user_metadata && S.user.user_metadata.display_name) || '', garden:(st.data && st.data.garden_name) || '' };
   S.focus = ft && ft.length ? ft : DEFAULT_FOCUS.map(f => ({ ...f }));
   S.flog = (fq.data || []).map(x => ({ d:dateKey(new Date(x.created_at)), m:x.minutes }));
   S.badges = (st.data && st.data.badges) || {};

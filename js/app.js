@@ -461,19 +461,9 @@ const actions = {
   async auth() {
     if (!sb) return toast('Add your Supabase keys to enable sign-in');
     if (S.user) { await sb.auth.signOut(); S.user = null; localLoad(); render(); localStorage.removeItem('toma-guest'); showScreen('landing'); return; }
-    $('#authMsg').textContent = ''; $('#authDlg').showModal();
+    setAuthMode('signin'); $('#authDlg').showModal();
   },
-  closeAuth: () => $('#authDlg').close(),
-  async signin() {
-    const { error } = await sb.auth.signInWithPassword({ email:$('#email').value, password:$('#pass').value });
-    if (error) return ($('#authMsg').textContent = error.message);
-    await afterAuth();
-  },
-  async signup() {
-    const { data, error } = await sb.auth.signUp({ email:$('#email').value, password:$('#pass').value });
-    if (error) return ($('#authMsg').textContent = error.message);
-    if (data.session) await afterAuth(); else $('#authMsg').textContent = 'Check your email to confirm, then sign in.';
-  }
+  closeAuth: () => $('#authDlg').close()
 };
 async function afterAuth() {
   const { data } = await sb.auth.getSession();

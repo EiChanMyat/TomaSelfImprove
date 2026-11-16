@@ -88,3 +88,11 @@ body { font-family:'Nunito',sans-serif; color:#2b4a42; background:linear-gradien
   html.dark #toast { background:#e3f1ea !important; color:#10201d !important; }
   html.dark .blob { opacity:.22; }
   html.dark .bg-gradient-to-br { background-image:linear-gradient(to bottom right,#3a3618,#1f3b30) !important; }
+
+  /* ---------- password rules and messages ---------- */
+  .rule { display:flex; gap:.5rem; align-items:flex-start; color:#6b8078; transition:color .2s; }
+  .rule .tick { width:1rem; text-align:center; font-weight:800; }
+  .rule.ok { color:#2c7a5c; } .rule.ok .rt { text-decoration:line-through; }
+  .rule.bad { color:#c0392b; font-weight:700; }
+  .msg-ok { color:#2c7a5c; } .msg-bad { color:#c0392b; }
+  html.dark .rule { color:#9bb5aa; } html.dark .rule.ok, html.dark .msg-ok { color:#7fd9b0; } html.dark .rule.bad, html.dark .msg-bad { color:#ff9aa2; }

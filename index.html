@@ -228,25 +228,30 @@ tailwind.config = { theme: { extend: {
 </div>
 
 <!-- Sign-in sheet (only used when Supabase is configured) -->
-<dialog id="authDlg" class="rounded-3xl p-6 w-[320px] backdrop:bg-ink/40">
-  <h2 id="authTitle" class="font-display text-xl font-semibold mb-1">Save your garden</h2>
-  <p id="authSub" class="text-sm text-ink/70 mb-4">Sign in to keep your habits and energy across devices.</p>
-  <input id="email" type="email" placeholder="Email" autocomplete="email" class="w-full border border-mint-300 rounded-xl px-3 py-2 mb-2">
-  <input id="pass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password" class="w-full border border-mint-300 rounded-xl px-3 py-2 mb-3">
-  <button data-a="forgot" class="text-xs font-bold underline text-mint-700 mb-2">Forgot password?</button>
-  <p id="authMsg" class="text-sm text-mint-700 min-h-[1.25rem] mb-2"></p>
-  <div class="flex gap-2">
-    <button data-a="signin" class="flex-1 bg-mint-500 text-white font-bold rounded-xl py-2">Sign in</button>
-    <button data-a="signup" class="flex-1 bg-butter-300 font-bold rounded-xl py-2">Create account</button>
+<dialog id="authDlg" class="rounded-3xl p-6 w-[340px] max-w-[92vw] backdrop:bg-ink/40">
+  <h2 id="authTitle" class="font-display text-xl font-semibold mb-1">Welcome back</h2>
+  <p id="authSub" class="text-sm text-ink/70 mb-4"></p>
+  <div id="nameRow" class="hidden mb-3">
+    <label class="text-sm font-bold" for="name">Name</label>
+    <input id="name" maxlength="30" autocomplete="name" placeholder="What should Toma call you?" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 bg-white">
   </div>
-  <button data-a="closeAuth" class="w-full text-sm mt-3 text-ink/60">Close</button>
+  <label class="text-sm font-bold" for="email">Email</label>
+  <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 bg-white">
+  <p id="emailHint" class="text-xs min-h-[1rem] mt-1 mb-2"></p>
+  <label class="text-sm font-bold" for="pass">Password</label>
+  <div id="pwSlot" class="mt-1"></div>
+  <button id="forgotBtn" data-a="forgot" class="text-xs font-bold underline text-mint-700 mt-2">Forgot password?</button>
+  <p id="authMsg" class="text-sm min-h-[1.25rem] my-2"></p>
+  <button id="authGo" data-a="authSubmit" class="w-full bg-mint-500 text-white font-bold rounded-xl py-2.5 disabled:opacity-60">Sign in</button>
+  <p class="text-sm text-center mt-3"><span id="switchText">New here?</span> <button id="switchBtn" data-a="authSwitch" class="font-bold underline text-mint-700">Create an account</button></p>
+  <button data-a="closeAuth" class="w-full text-sm mt-2 text-ink/60">Close</button>
 </dialog>
 
 <!-- New password after a reset link -->
 <dialog id="resetDlg" class="rounded-3xl p-6 w-[320px] backdrop:bg-ink/40">
   <h2 class="font-display text-xl font-semibold mb-1">Choose a new password</h2>
   <p class="text-sm text-ink/70 mb-4">You opened a reset link, so pick a new password to continue.</p>
-  <input id="resetPw" type="password" autocomplete="new-password" placeholder="New password (6+ characters)" class="w-full border border-mint-300 rounded-xl px-3 py-2 mb-3">
+  <div id="resetSlot" class="mb-3"></div>
   <p id="resetMsg" class="text-sm text-red-600 min-h-[1.25rem] mb-2"></p>
   <button data-a="saveNewPw" class="w-full bg-mint-500 text-white font-bold rounded-xl py-2">Save password</button>
 </dialog>
@@ -293,5 +298,6 @@ tailwind.config = { theme: { extend: {
 <script src="js/landing.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/insights.js"></script>
+<script src="js/validation.js"></script>
 </body>
 </html>

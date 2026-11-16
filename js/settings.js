@@ -15,7 +15,8 @@ function settingsView() {
     <section class="card p-5"><h3 class="font-bold mb-3">Appearance</h3>
       <div class="flex gap-2">${themeBtn('light', '☀️ Light', !dark)}${themeBtn('dark', '🌙 Dark', dark)}</div></section>
     ${S.user ? `<section class="card p-5"><h3 class="font-bold mb-3">Change password</h3>
-      <input id="newPw" type="password" autocomplete="new-password" placeholder="New password (6+ characters)" class="w-full border border-mint-300 rounded-xl px-3 py-2 mb-3 bg-white">
+      ${pwBox('newPw', { ph:'New password', ac:'new-password', rules:true })}
+      <div class="mb-3"></div>
       <button data-a="changePw" class="bg-mint-500 text-white font-bold rounded-xl px-5 py-2">Update password</button>
       <p id="pwMsg" class="text-sm text-mint-700 mt-2 min-h-[1.25rem]"></p></section>
     <section class="card p-5 border-2 border-red-200"><h3 class="font-bold text-red-600">Delete my account</h3>
@@ -41,6 +42,7 @@ Object.assign(actions, {
     paintThemeBtns(); if (S.tab === 'settings') render();
   },
   async savePrefs() {
+    const nErr = $('#sName').value.trim() && checkName($('#sName').value.trim()); if (nErr) return toast(nErr);
     S.prefs = { name:$('#sName').value.trim().slice(0, 30), garden:$('#sGarden').value.trim().slice(0, 30) };
     if (cloud()) await guard(sb.from('user_settings').upsert({ user_id:S.user.id, display_name:S.prefs.name || null, garden_name:S.prefs.garden || null, updated_at:new Date().toISOString() }));
     else localStorage.setItem('toma-prefs', JSON.stringify(S.prefs));
@@ -48,7 +50,8 @@ Object.assign(actions, {
   },
   async changePw() {
     const pw = $('#newPw').value, msg = $('#pwMsg');
-    if (pw.length < 6) return (msg.textContent = 'Use at least 6 characters.');
+    const bad = pwProblems(pw);
+    if (bad.length) { paintRules('newPw', true); return (msg.textContent = 'Your password needs ' + bad.join(', ') + '.'); }
     const { error } = await sb.auth.updateUser({ password:pw });
     msg.textContent = error ? error.message : 'Password updated ✅'; if (!error) $('#newPw').value = '';
   },
@@ -61,19 +64,20 @@ Object.assign(actions, {
   clearLocal() { if (confirm('Erase all Toma data saved on this device?')) { wipeLocal(); location.reload(); } },
   async forgot() {
     const email = $('#email').value.trim(), msg = $('#authMsg');
-    if (!email) return (msg.textContent = 'Type your email above first.');
+    const bad = checkEmail(email); if (bad) return setAuthMsg(bad);
     const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo:location.origin + location.pathname });
-    msg.textContent = error ? error.message : 'Check your email for a reset link.';
+    setAuthMsg(error ? friendly(error) : 'Check your email for a reset link.', error ? '' : 'ok');
   },
   async saveNewPw() {
     const pw = $('#resetPw').value;
-    if (pw.length < 6) return ($('#resetMsg').textContent = 'Use at least 6 characters.');
+    const bad = pwProblems(pw);
+    if (bad.length) { paintRules('resetPw', true); return ($('#resetMsg').textContent = 'Your password needs ' + bad.join(', ') + '.'); }
     const { error } = await sb.auth.updateUser({ password:pw });
     if (error) return ($('#resetMsg').textContent = error.message);
     $('#resetDlg').close(); await afterAuth();
   }
 });
-if (sb) sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY') { $('#resetMsg').textContent = ''; $('#resetDlg').showModal(); } });
+if (sb) sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY') { $('#resetMsg').textContent = ''; $('#resetSlot').innerHTML = pwBox('resetPw', { ph:'New password', ac:'new-password', rules:true }); $('#resetDlg').showModal(); } });
 paintThemeBtns();
 
 /* midnight refresh: a new day starts fresh habits, even if the tab stayed open */

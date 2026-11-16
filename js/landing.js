@@ -10,10 +10,8 @@ function updateLanding() {   // signed-in visitors see "Open my garden" instead 
 }
 function openAuth(mode) {
   if (!sb) { localStorage.setItem('toma-guest', '1'); return showScreen('app'); }   // no Supabase keys: guest only
-  $('#authTitle').textContent = mode === 'signup' ? 'Create your account' : 'Welcome back';
-  $('#authSub').textContent = mode === 'signup' ? 'It only takes a few seconds. Your garden is waiting.' : 'Sign in to pick up where you left off.';
-  $('#authMsg').textContent = '';
-  $('#authDlg').showModal(); $('#email').focus();
+  setAuthMode(mode);
+  $('#authDlg').showModal(); $('#' + (mode === 'signup' ? 'name' : 'email')).focus();
 }
 const TOMA_SAYS = {
   happy:'Toma is beaming! Let’s keep that energy going.', relaxed:'Toma is relaxed. Maybe a calm focus session?',

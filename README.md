@@ -40,3 +40,6 @@ Returning signed-in users and guests go straight to the app; click the title in 
 Settings, dark mode, forgot password and the midnight refresh live in js/settings.js.
 
 Insights and achievements live in js/insights.js (shown on the Progress tab).
+
+Sign-up rules (email format, name, password checklist, show-password eye) live in js/validation.js.
+In Supabase also set Authentication > Sign In / Providers > Email: minimum password length 8 and "Lowercase, uppercase letters and digits", so the rules are enforced on the server too.
