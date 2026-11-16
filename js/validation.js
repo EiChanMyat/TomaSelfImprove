@@ -11,7 +11,7 @@ function checkEmail(e) {   // format only: any real-looking address passes, so t
 function checkName(n) {
   if (n.length < 2) return 'Your name needs at least 2 characters.';
   if (n.length > 30) return 'Your name can have at most 30 characters.';
-  if (!/^[\p{L}\p{M}][\p{L}\p{M} '.-]*$/u.test(n)) return 'Use letters, spaces, apostrophes, dots or hyphens only.';
+  if (!/^[\p{L}\p{M}][\p{L}\p{M} '.-]*$/u.test(n)) return 'Use letters, spaces, apostrophes, dots or hyphens only (no numbers).';
   return '';
 }
 const COMMON_PW = ['password', 'password1', 'password123', '12345678', '123456789', '1234567890', 'qwerty123', 'qwertyui', 'iloveyou', 'admin123', 'welcome1', 'letmein1', 'abc12345', '11111111', 'passw0rd', 'p@ssw0rd'];
@@ -59,6 +59,27 @@ function paintRules(id, showBad) {   // tick (and cross out) each rule as it is 
 }
 
 /* ----- the sign in / create account dialog ----- */
+function validateAuth(email, name, pw, up) {   // returns { name, email, pass } messages for the fields that need fixing
+  const errs = {}, e = checkEmail(email); if (e) errs.email = e;
+  if (up) {
+    const n = checkName(name); if (n) errs.name = n;
+    const bad = pwProblems(pw); if (bad.length) errs.pass = 'Your password still needs ' + bad.join(', ') + '.';
+  } else if (!pw) errs.pass = 'Enter your password.';
+  return errs;
+}
+function fieldError(f, msg) {   // f = 'name' | 'email' | 'pass': message shows right under that field and the field turns red
+  const p = $('#' + f + 'Err'), i = $('#' + f); if (!p || !i) return;
+  p.textContent = msg || ''; i.classList.toggle('field-bad', !!msg); i.setAttribute('aria-invalid', !!msg);
+}
+const up_name = () => $('#name').value.trim();
+const clearFieldErrors = () => ['name', 'email', 'pass'].forEach(f => fieldError(f, ''));
+function authError(err, up) {   // server errors: put them under the right field when we can
+  const m = friendly(err);
+  if (/already has an account/.test(m)) fieldError('email', m);
+  else if (up && /password/i.test(err.message || '')) fieldError('pass', m);
+  else setAuthMsg(m);
+}
+
 function setAuthMsg(text, kind) { const p = $('#authMsg'); p.textContent = text; p.className = 'text-sm min-h-[1.25rem] my-2 ' + (kind === 'ok' ? 'msg-ok' : 'msg-bad'); }
 function setAuthMode(mode) {
   S.authMode = mode; const up = mode === 'signup';
@@ -70,7 +91,7 @@ function setAuthMode(mode) {
   $('#authGo').textContent = up ? 'Create account' : 'Sign in';
   $('#switchText').textContent = up ? 'Already have an account?' : 'New here?';
   $('#switchBtn').textContent = up ? 'Sign in' : 'Create an account';
-  setAuthMsg('');
+  setAuthMsg(''); clearFieldErrors();
 }
 function hintEmail() {
   const s = suggestEmail($('#email').value.trim().toLowerCase());
@@ -86,22 +107,24 @@ Object.assign(actions, {
   fixEmail(v) { $('#email').value = v; hintEmail(); },
   authSwitch() { setAuthMode(S.authMode === 'signup' ? 'signin' : 'signup'); },
   async authSubmit() {
-    const email = $('#email').value.trim().toLowerCase(), pw = $('#pass').value, up = S.authMode === 'signup', go = $('#authGo');
-    const eErr = checkEmail(email); if (eErr) return setAuthMsg(eErr);
+    const email = $('#email').value.trim().toLowerCase(), name = up_name(), pw = $('#pass').value, up = S.authMode === 'signup', go = $('#authGo');
+    clearFieldErrors(); setAuthMsg('');
+    const errs = validateAuth(email, name, pw, up), first = ['name', 'email', 'pass'].find(f => errs[f]);
+    if (first) {
+      Object.entries(errs).forEach(([f, m]) => fieldError(f, m));
+      if (errs.pass && up) paintRules('pass', true);
+      return $('#' + first).focus();
+    }
     go.disabled = true;
     try {
       if (up) {
-        const name = $('#name').value.trim(), nErr = checkName(name); if (nErr) return setAuthMsg(nErr);
-        const bad = pwProblems(pw);
-        if (bad.length) { paintRules('pass', true); return setAuthMsg('Your password needs ' + bad.join(', ') + '.'); }
         const { data, error } = await sb.auth.signUp({ email, password:pw, options:{ data:{ display_name:name } } });
-        if (error) return setAuthMsg(friendly(error));
+        if (error) return authError(error, true);
         if (data.session) return await afterAuth();
         setAuthMode('signin'); setAuthMsg('Account created! Check your email to confirm it, then sign in.', 'ok');
       } else {
-        if (!pw) return setAuthMsg('Enter your password.');
         const { error } = await sb.auth.signInWithPassword({ email, password:pw });
-        if (error) return setAuthMsg(friendly(error));
+        if (error) return authError(error, false);
         await afterAuth();
       }
     } finally { go.disabled = false; }
@@ -111,6 +134,7 @@ document.addEventListener('input', e => {
   const t = e.target;
   if (t.hasAttribute && t.hasAttribute('data-pw')) paintRules(t.id);
   if (t.id === 'email') hintEmail();
+  if (['name', 'email', 'pass'].includes(t.id)) fieldError(t.id, '');   // the message goes away as soon as you start fixing it
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && $('#authDlg').open && ['email', 'name', 'pass'].includes(e.target.id)) actions.authSubmit();

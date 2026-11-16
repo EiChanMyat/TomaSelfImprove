@@ -96,3 +96,10 @@ body { font-family:'Nunito',sans-serif; color:#2b4a42; background:linear-gradien
   .rule.bad { color:#c0392b; font-weight:700; }
   .msg-ok { color:#2c7a5c; } .msg-bad { color:#c0392b; }
   html.dark .rule { color:#9bb5aa; } html.dark .rule.ok, html.dark .msg-ok { color:#7fd9b0; } html.dark .rule.bad, html.dark .msg-bad { color:#ff9aa2; }
+
+  /* ---------- field errors; hide Edge's built-in reveal icon so only our eye shows ---------- */
+  .fielderr { color:#c0392b; font-size:.75rem; font-weight:700; margin-top:.3rem; }
+  .fielderr:empty { display:none; }
+  input.field-bad { border-color:#c0392b !important; box-shadow:0 0 0 2px rgba(192,57,43,.18); }
+  html.dark .fielderr { color:#ff9aa2; } html.dark input.field-bad { border-color:#ff9aa2 !important; }
+  input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display:none; }

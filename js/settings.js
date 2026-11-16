@@ -64,7 +64,7 @@ Object.assign(actions, {
   clearLocal() { if (confirm('Erase all Toma data saved on this device?')) { wipeLocal(); location.reload(); } },
   async forgot() {
     const email = $('#email').value.trim(), msg = $('#authMsg');
-    const bad = checkEmail(email); if (bad) return setAuthMsg(bad);
+    const bad = checkEmail(email); if (bad) { fieldError('email', bad); return $('#email').focus(); }
     const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo:location.origin + location.pathname });
     setAuthMsg(error ? friendly(error) : 'Check your email for a reset link.', error ? '' : 'ok');
   },
