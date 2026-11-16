@@ -44,7 +44,8 @@ const BADGES = [
   ['mood1', '😊', 'Self-aware', 'Log your first mood', () => Object.keys(S.moodMap).length >= 1],
   ['mood7', '📅', 'Mood tracker', 'Log 7 moods', () => Object.keys(S.moodMap).length >= 7],
   ['garden3', '🌳', 'Garden keeper', 'Reach garden level 3', () => S.energy >= 200],
-  ['tasks5', '📝', 'Task master', 'Have 5 tasks ticked at once', () => S.todos.filter(t => t.done).length >= 5]
+  ['tasks5', '📝', 'Task master', 'Have 5 tasks ticked at once', () => S.todos.filter(t => t.done).length >= 5],
+  ['money1', '💰', 'Money minded', 'Add your first income or expense', () => S.tx.length >= 1]
 ];
 function badgesView() {
   const got = BADGES.filter(b => S.badges[b[0]]).length;

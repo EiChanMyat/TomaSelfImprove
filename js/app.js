@@ -248,7 +248,7 @@ function render() {
   $('#bar').style.width = pct() + '%';
   $('#authChip').textContent = !sb ? '📴 Local mode' : S.user ? 'Sign out' : 'Sign in';
   $('#acct').textContent = S.user ? '👤 ' + (S.prefs.name || S.user.email) : '👤 ' + (S.prefs.name || 'Guest') + ' · not signed in';
-  $('#view').innerHTML = ({ home:homeView, habits:habitsView, progress:progressView, focus:focusView, mood:moodView, todo:todoView, settings:() => settingsView() })[S.tab]();
+  $('#view').innerHTML = ({ home:homeView, habits:habitsView, progress:progressView, focus:focusView, mood:moodView, todo:todoView, settings:() => settingsView(), money:() => moneyView() })[S.tab]();
   document.querySelectorAll('.nav').forEach(b => {
     const on = b.dataset.v === S.tab;
     b.classList.toggle('bg-mint-100', on); b.classList.toggle('text-mint-700', on);

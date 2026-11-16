@@ -32,7 +32,7 @@ const AFFIRMATIONS = [
   'I deserve care, starting with my own.'
 ];
 
-const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY, moodRange:7, todos:[], focusDone:'', prefs:{ name:'', garden:'' }, flog:[], badges:{},
+const S = { tab:'home', habits:DEFAULT_HABITS, focus:DEFAULT_FOCUS.map(f => ({ ...f })), done:new Set(), energy:0, mood:null, moodMap:{}, moodDay:TODAY, moodRange:7, todos:[], focusDone:'', prefs:{ name:'', garden:'' }, flog:[], badges:{}, tx:[], money:{ labels:{ income:[], expense:[] }, cur:'$' }, txMonth:new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   calMonth:new Date(new Date().getFullYear(), new Date().getMonth(), 1), user:null, aff:new Date().getDate() % AFFIRMATIONS.length };
 const T = { sel:'f1', total:1500, left:1500, running:false, end:0, id:null };
 
@@ -58,6 +58,8 @@ function localLoad() {
   S.prefs = get('toma-prefs', { name:'', garden:'' });
   S.flog = get('toma-flog', []);
   S.badges = get('toma-badges', {});
+  S.tx = get('toma-tx', []);
+  S.money = get('toma-money', { labels:{ income:[], expense:[] }, cur:'$' });
   S.mood = S.moodMap[TODAY] || null;
   S.habits = get('toma-habits2', DEFAULT_HABITS.map(h => ({ ...h })));
   S.focus = get('toma-focus', DEFAULT_FOCUS.map(f => ({ ...f })));
@@ -75,19 +77,22 @@ function localSave() {
     localStorage.setItem('toma-todos', JSON.stringify(S.todos));
     localStorage.setItem('toma-flog', JSON.stringify(S.flog));
     localStorage.setItem('toma-badges', JSON.stringify(S.badges));
+    localStorage.setItem('toma-tx', JSON.stringify(S.tx));
+    localStorage.setItem('toma-money', JSON.stringify(S.money));
   } catch (e) {}
 }
 
 async function cloudLoad() {
-  const [h, l, g, m, r, st, td, fq] = await Promise.all([
+  const [h, l, g, m, r, st, td, fq, tq] = await Promise.all([
     sb.from('habits').select('*').order('id'),
     sb.from('habit_logs').select('habit_id').eq('log_date', TODAY),
     sb.from('garden_stats').select('*').maybeSingle(),
     sb.from('moods').select('mood_date,mood').order('mood_date', { ascending:false }).limit(800),
     sb.from('habit_logs').select('log_date').gte('log_date', daysAgo(60)),
-    sb.from('user_settings').select('focus_types,display_name,garden_name,badges').maybeSingle(),
+    sb.from('user_settings').select('focus_types,display_name,garden_name,badges,money').maybeSingle(),
     sb.from('todos').select('*').order('id'),
-    sb.from('focus_sessions').select('created_at,minutes').order('created_at', { ascending:false }).limit(500)
+    sb.from('focus_sessions').select('created_at,minutes').order('created_at', { ascending:false }).limit(500),
+    sb.from('transactions').select('*').order('tx_date', { ascending:false }).order('id', { ascending:false }).limit(3000)
   ]);
   S.habits = h.data || [];
   S.todos = td.data || [];
@@ -101,6 +106,7 @@ async function cloudLoad() {
   S.focus = ft && ft.length ? ft : DEFAULT_FOCUS.map(f => ({ ...f }));
   S.flog = (fq.data || []).map(x => ({ d:dateKey(new Date(x.created_at)), m:x.minutes }));
   S.badges = (st.data && st.data.badges) || {};
+  S.tx = (tq.data || []).map(fromRow); S.money = normMoney(st.data && st.data.money);
   if (typeof checkBadges === 'function') checkBadges(false);   // quietly award anything already earned
   selectFocus(S.focus[0].id);
 }

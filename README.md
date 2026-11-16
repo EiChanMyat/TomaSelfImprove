@@ -19,7 +19,8 @@ toma-web/
     ├── update-v4.sql                manage all habits, custom focus timers, mood calendar (run third)
     ├── update-v5.sql                to-do list (run fourth)
     ├── update-v6.sql                profile names and delete my account (run fifth)
-    └── update-v7.sql                habit schedules and achievements (run sixth)
+    ├── update-v7.sql                habit schedules and achievements (run sixth)
+    └── update-v8.sql                money tracker (run seventh)
 ```
 
 ## Run locally
@@ -43,3 +44,5 @@ Insights and achievements live in js/insights.js (shown on the Progress tab).
 
 Sign-up rules (email format, name, password checklist, show-password eye) live in js/validation.js.
 In Supabase also set Authentication > Sign In / Providers > Email: minimum password length 8 and "Lowercase, uppercase letters and digits", so the rules are enforced on the server too.
+
+The Money tab (income, expenses, labels, pie charts) lives in js/money.js.

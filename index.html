@@ -198,6 +198,7 @@ tailwind.config = { theme: { extend: {
           <button data-a="tab" data-v="focus"  class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">⏱️ Focus</button>
           <button data-a="tab" data-v="mood"   class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">😊 Mood</button>
           <button data-a="tab" data-v="todo" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">📝 To-do</button>
+          <button data-a="tab" data-v="money" class="nav rounded-full px-4 py-2 text-sm font-bold hover:bg-white">💰 Money</button>
         </nav>
       <div class="card mt-3 px-4 py-3">
         <div class="flex justify-between text-sm font-bold mb-1.5">
@@ -217,13 +218,14 @@ tailwind.config = { theme: { extend: {
   <div id="toast" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-20 bg-ink text-white text-sm font-bold rounded-full px-4 py-2 shadow-lg whitespace-nowrap"></div>
 
   <!-- Bottom tabs on phones only -->
-  <nav class="md:hidden grid grid-cols-6 gap-0.5 px-3 pt-2 pb-[max(.75rem,env(safe-area-inset-bottom))] bg-white border-t border-mint-100" aria-label="Main">
-    <button data-a="tab" data-v="home"   class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">🌱</span>Garden</button>
-    <button data-a="tab" data-v="habits" class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">✅</span>Habits</button>
-    <button data-a="tab" data-v="progress" class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">📈</span>Progress</button>
-    <button data-a="tab" data-v="focus"  class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">⏱️</span>Focus</button>
-    <button data-a="tab" data-v="mood"   class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">😊</span>Mood</button>
-    <button data-a="tab" data-v="todo" class="nav rounded-2xl py-2 text-xs font-bold"><span class="block text-xl">📝</span>To-do</button>
+  <nav class="md:hidden flex overflow-x-auto gap-0.5 px-3 pt-2 pb-[max(.75rem,env(safe-area-inset-bottom))] bg-white border-t border-mint-100" aria-label="Main">
+    <button data-a="tab" data-v="home"   class="nav rounded-2xl py-2 text-xs font-bold shrink-0 flex-1 min-w-[3.75rem]"><span class="block text-xl">🌱</span>Garden</button>
+    <button data-a="tab" data-v="habits" class="nav rounded-2xl py-2 text-xs font-bold shrink-0 flex-1 min-w-[3.75rem]"><span class="block text-xl">✅</span>Habits</button>
+    <button data-a="tab" data-v="progress" class="nav rounded-2xl py-2 text-xs font-bold shrink-0 flex-1 min-w-[3.75rem]"><span class="block text-xl">📈</span>Progress</button>
+    <button data-a="tab" data-v="focus"  class="nav rounded-2xl py-2 text-xs font-bold shrink-0 flex-1 min-w-[3.75rem]"><span class="block text-xl">⏱️</span>Focus</button>
+    <button data-a="tab" data-v="mood"   class="nav rounded-2xl py-2 text-xs font-bold shrink-0 flex-1 min-w-[3.75rem]"><span class="block text-xl">😊</span>Mood</button>
+    <button data-a="tab" data-v="todo" class="nav rounded-2xl py-2 text-xs font-bold shrink-0 flex-1 min-w-[3.75rem]"><span class="block text-xl">📝</span>To-do</button>
+    <button data-a="tab" data-v="money" class="nav rounded-2xl py-2 text-xs font-bold shrink-0 flex-1 min-w-[3.75rem]"><span class="block text-xl">💰</span>Money</button>
   </nav>
 </div>
 
@@ -257,6 +259,31 @@ tailwind.config = { theme: { extend: {
   <div id="resetSlot" class="mb-3"></div>
   <p id="resetMsg" class="text-sm text-red-600 min-h-[1.25rem] mb-2"></p>
   <button data-a="saveNewPw" class="w-full bg-mint-500 text-white font-bold rounded-xl py-2">Save password</button>
+</dialog>
+
+<!-- Add / edit income or expense -->
+<dialog id="txDlg" class="rounded-3xl p-6 w-[360px] max-w-[92vw] backdrop:bg-ink/40">
+  <h2 id="txTitle" class="font-display text-xl font-semibold mb-3">Add expense</h2>
+  <label class="text-sm font-bold" for="txAmt">Amount</label>
+  <input id="txAmt" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0.00" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 bg-white">
+  <p id="txAmtErr" class="fielderr" role="alert"></p>
+  <p class="text-sm font-bold mt-3">Label</p>
+  <div id="txLabels" class="flex flex-wrap gap-2 mt-1"></div>
+  <div id="txNewRow" class="hidden flex gap-2 mt-2">
+    <input id="txNewLabel" maxlength="20" placeholder="New label name" class="flex-1 min-w-0 border border-mint-300 rounded-xl px-3 py-2 bg-white">
+    <button type="button" data-a="txAddLabel" class="bg-mint-500 text-white font-bold rounded-xl px-4">Add</button>
+  </div>
+  <p id="txLabelErr" class="fielderr" role="alert"></p>
+  <label class="text-sm font-bold block mt-3" for="txDate">Date</label>
+  <input id="txDate" type="date" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 bg-white">
+  <p id="txDateErr" class="fielderr" role="alert"></p>
+  <label class="text-sm font-bold block mt-3" for="txNote">Note (optional)</label>
+  <input id="txNote" maxlength="60" placeholder="e.g. Monthly rent" class="w-full border border-mint-300 rounded-xl px-3 py-2 mt-1 bg-white">
+  <div class="flex gap-2 mt-5">
+    <button data-a="txSave" class="flex-1 bg-mint-500 text-white font-bold rounded-xl py-2.5">Save</button>
+    <button data-a="txClose" class="flex-1 bg-butter-300 font-bold rounded-xl py-2.5">Cancel</button>
+  </div>
+  <button id="txDelete" data-a="txDelete" class="hidden w-full text-sm mt-3 text-red-600 font-bold">Delete this entry</button>
 </dialog>
 
 <!-- Add / edit focus -->
@@ -302,5 +329,6 @@ tailwind.config = { theme: { extend: {
 <script src="js/settings.js"></script>
 <script src="js/insights.js"></script>
 <script src="js/validation.js"></script>
+<script src="js/money.js"></script>
 </body>
 </html>
